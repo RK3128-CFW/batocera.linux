@@ -12,7 +12,7 @@ if BR2_PACKAGE_BATOCERA_TARGET_X86 || BR2_PACKAGE_BATOCERA_TARGET_X86_64
 	default y
 endif
 
-if BR2_PACKAGE_BATOCERA_TARGET_RK3399 || BR2_PACKAGE_BATOCERA_TARGET_RK3288 || BR2_PACKAGE_BATOCERA_TARGET_RK3326_ANY
+if BR2_PACKAGE_BATOCERA_TARGET_RK3399 || BR2_PACKAGE_BATOCERA_TARGET_RK3288 || BR2_PACKAGE_BATOCERA_TARGET_RK3326_ANY || BR2_PACKAGE_BATOCERA_TARGET_PS5000
 	config BR2_PACKAGE_BATOCERA_TARGET_ROCKCHIP_ANY
 	bool "rockchip_targets"
 	default y
@@ -165,7 +165,7 @@ config BR2_PACKAGE_BATOCERA_SYSTEM
 	select BR2_PACKAGE_LIBCEC                               # libcec
 	select BR2_PACKAGE_EDID_DECODE                          # edid monitor/tv support
 	select BR2_PACKAGE_READ_EDID                            # edid monitor/tv support
-	select BR2_PACKAGE_XOW                                  if !BR2_PACKAGE_BATOCERA_TARGET_RK3399 && !BR2_PACKAGE_BATOCERA_TARGET_RK3326_ANY # xbox receiver (require linux >= 4.5)
+	select BR2_PACKAGE_XOW                                  if !BR2_PACKAGE_BATOCERA_TARGET_RK3399 && !BR2_PACKAGE_BATOCERA_TARGET_RK3326_ANY && !BR2_PACKAGE_BATOCERA_TARGET_PS5000 # xbox receiver (require linux >= 4.5)
 	select BR2_PACKAGE_WII_U_GC_ADAPTER                     # wii-u-gc-adapter
 	select BR2_SYSTEM_ENABLE_NLS                            # locales
 	select BR2_PACKAGE_ACPID                                if BR2_PACKAGE_BATOCERA_TARGET_X86_ANY
@@ -217,7 +217,8 @@ config BR2_PACKAGE_BATOCERA_SYSTEM
 	select BR2_PACKAGE_RTL8821AU            if  !BR2_PACKAGE_BATOCERA_TARGET_RPI1           && \
                                                 !BR2_PACKAGE_BATOCERA_TARGET_ORANGEPI_PC    && \
                                                 !BR2_PACKAGE_BATOCERA_TARGET_CHA            && \
-                                                !BR2_PACKAGE_BATOCERA_TARGET_RK3326_ANY
+                                                !BR2_PACKAGE_BATOCERA_TARGET_RK3326_ANY		&& \
+						!BR2_PACKAGE_BATOCERA_TARGET_PS5000 
 
 	select BR2_PACKAGE_RTL8723BU        if BR2_PACKAGE_BATOCERA_TARGET_X86_ANY # at least for pc
 	select BR2_PACKAGE_RTL8188EU        if BR2_PACKAGE_BATOCERA_TARGET_X86_ANY # at least for pc
@@ -227,7 +228,8 @@ config BR2_PACKAGE_BATOCERA_SYSTEM
 	select BR2_PACKAGE_RTL8192EU		if  !BR2_PACKAGE_BATOCERA_TARGET_RPI1           && \
                                             !BR2_PACKAGE_BATOCERA_TARGET_RPIZERO2       && \
                                             !BR2_PACKAGE_BATOCERA_TARGET_CHA            && \
-                                            !BR2_PACKAGE_BATOCERA_TARGET_ORANGEPI_PC
+                                            !BR2_PACKAGE_BATOCERA_TARGET_ORANGEPI_PC	&& \
+					    !BR2_PACKAGE_BATOCERA_TARGET_PS5000
 
 	select BR2_PACKAGE_RTL8821CE		if  !BR2_PACKAGE_BATOCERA_TARGET_RPI1               && \
                                             !BR2_PACKAGE_BATOCERA_TARGET_RPIZERO2           && \
@@ -239,7 +241,8 @@ config BR2_PACKAGE_BATOCERA_SYSTEM
                                             !BR2_PACKAGE_BATOCERA_TARGET_RK3288             && \
                                             !BR2_PACKAGE_BATOCERA_TARGET_ORANGEPI_PC        && \
                                             !BR2_PACKAGE_BATOCERA_TARGET_CHA                && \
-                                            !BR2_PACKAGE_BATOCERA_TARGET_RK3326_ANY
+                                            !BR2_PACKAGE_BATOCERA_TARGET_RK3326_ANY	    && \
+					    !BR2_PACKAGE_BATOCERA_TARGET_PS5000
 
 	# s905 tv-box firmwares
 	select BR2_PACKAGE_FIRMWARE_WLAN_AML    if BR2_PACKAGE_BATOCERA_TARGET_S905GEN3
@@ -333,6 +336,7 @@ config BR2_TARGET_BATOCERA_IMAGES_DEFINITIONS
 	default "cha"                                               if BR2_PACKAGE_BATOCERA_TARGET_CHA
 	default "s812"                                              if BR2_PACKAGE_BATOCERA_TARGET_S812
 	default "odroidxu4"                                         if BR2_PACKAGE_BATOCERA_TARGET_XU4
+	default "rockchip/ps5000"                                   if BR2_PACKAGE_BATOCERA_TARGET_PS5000
 	default "x86"                                               if BR2_PACKAGE_BATOCERA_TARGET_X86
 	default "x86_64"                                            if BR2_PACKAGE_BATOCERA_TARGET_X86_64
 
@@ -407,6 +411,9 @@ config BR2_PACKAGE_BATOCERA_TARGET_CHA
 
 config BR2_PACKAGE_BATOCERA_TARGET_S812
 	bool "s812"
+
+config BR2_PACKAGE_BATOCERA_TARGET_PS5000
+        bool "ps5000"
 
 endchoice
 
@@ -663,9 +670,10 @@ config BR2_PACKAGE_BATOCERA_MSDOS_SYSTEMS
                                                     !BR2_PACKAGE_BATOCERA_TARGET_RPI2		&& \
                                                     !BR2_PACKAGE_BATOCERA_TARGET_RPI3		&& \
                                                     !BR2_PACKAGE_BATOCERA_TARGET_RK3399		&& \
-                                                    !BR2_PACKAGE_BATOCERA_TARGET_CHA		# dos
+                                                    !BR2_PACKAGE_BATOCERA_TARGET_CHA	 	&& \
+						    !BR2_PACKAGE_BATOCERA_TARGET_PS5000		# dos
 
-	select BR2_PACKAGE_DOSBOX_STAGING           if  !BR2_PACKAGE_BATOCERA_TARGET_RPI1 && !BR2_PACKAGE_BATOCERA_TARGET_RPIZERO2 && !BR2_PACKAGE_BATOCERA_TARGET_CHA && !BR2_PACKAGE_BATOCERA_TARGET_RK3399
+	select BR2_PACKAGE_DOSBOX_STAGING           if  !BR2_PACKAGE_BATOCERA_TARGET_RPI1 && !BR2_PACKAGE_BATOCERA_TARGET_RPIZERO2 && !BR2_PACKAGE_BATOCERA_TARGET_CHA && !BR2_PACKAGE_BATOCERA_TARGET_RK3399 && !BR2_PACKAGE_BATOCERA_TARGET_PS5000
 
 	select BR2_PACKAGE_LIBRETRO_DOSBOX_PURE     # ALL
 
@@ -827,7 +835,8 @@ config BR2_PACKAGE_BATOCERA_CONSOLE_SYSTEMS
                                                         !BR2_PACKAGE_BATOCERA_TARGET_RPIZERO2   && \
                                                         !BR2_PACKAGE_BATOCERA_TARGET_RPI2       && \
                                                         !BR2_PACKAGE_BATOCERA_TARGET_CHA        && \
-                                                        !BR2_PACKAGE_BATOCERA_TARGET_RK3326_ANY
+                                                        !BR2_PACKAGE_BATOCERA_TARGET_RK3326_ANY && \
+							!BR2_PACKAGE_BATOCERA_TARGET_PS5000
 
 	select BR2_PACKAGE_LIBRETRO_SWANSTATION         if  !BR2_PACKAGE_BATOCERA_TARGET_X86	    && \
 	                                                    !BR2_PACKAGE_BATOCERA_TARGET_CHA        && \
@@ -864,7 +873,8 @@ config BR2_PACKAGE_BATOCERA_CONSOLE_SYSTEMS
                                                         !BR2_PACKAGE_BATOCERA_TARGET_S905       && \
                                                         !BR2_PACKAGE_BATOCERA_TARGET_S912		&& \
                                                         !BR2_PACKAGE_BATOCERA_TARGET_RK3399     && \
-                                                        !BR2_PACKAGE_BATOCERA_TARGET_RK3288
+                                                        !BR2_PACKAGE_BATOCERA_TARGET_RK3288	&& \
+                                                        !BR2_PACKAGE_BATOCERA_TARGET_PS5000
 
 	# Gamecube / Wii
 	select BR2_PACKAGE_DOLPHIN_EMU                  if  BR2_PACKAGE_BATOCERA_TARGET_X86_64	|| \

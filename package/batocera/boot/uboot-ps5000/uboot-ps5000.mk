@@ -6,7 +6,7 @@
 
 UBOOT_PS5000_VERSION = e20e9d85d326345fb2e80105a79263c95757414f
 #634b85f106c0eb3d5167c989729b564253d60816
-UBOOT_PS5000_SITE = $(call github,mcerveny,caesar-u-boot,$(UBOOT_PS5000_VERSION))
+UBOOT_PS5000_SITE = $(call github,rk3128-cfw,caesar-u-boot,$(UBOOT_PS5000_VERSION))
 UBOOT_PS5000_LICENSE = GPLv2
 
 UBOOT_PS5000_DEPENDENCIES = host-toolchain-optional-linaro-arm rkbin
@@ -14,7 +14,7 @@ UBOOT_PS5000_DEPENDENCIES = host-toolchain-optional-linaro-arm rkbin
 define UBOOT_PS5000_BUILD_CMDS
     # FIXME: there should be a better way to build
     # Build uboot for wx8-rk3128
-    cd $(@D) && ARCH=arm CHIP=rk3128 CROSS_COMPILE=$(HOST_DIR)/lib/gcc-linaro-arm-linux-gnueabihf/bin/arm-linux-gnueabihf- make ps7000-rk3128_defconfig
+    cd $(@D) && ARCH=arm CHIP=rk3128 CROSS_COMPILE=$(HOST_DIR)/lib/gcc-linaro-arm-linux-gnueabihf/bin/arm-linux-gnueabihf- make ps5000-rk3128_defconfig
     cd $(@D) && ARCH=arm CHIP=rk3128 CROSS_COMPILE=$(HOST_DIR)/lib/gcc-linaro-arm-linux-gnueabihf/bin/arm-linux-gnueabihf- make
     #cd $(@D) && $(@D)/make.sh wx8-rk3128
 

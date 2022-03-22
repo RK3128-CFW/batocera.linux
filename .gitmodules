@@ -1,4 +1,3 @@
 [submodule "buildroot"]
 	path = buildroot
-	url = git@github.com:RK3128-CFW/buildroot.git
-	branch = rk3128-cfw
+	url = https://github.com/batocera-linux/buildroot.git

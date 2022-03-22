@@ -7,11 +7,12 @@ snes:
   group:      snes
   emulators:
     libretro:
-      pocketsnes:  { requireAnyOf: [BR2_PACKAGE_LIBRETRO_POCKETSNES] }
+      pocketsnes:  { requireAnyOf: [BR2_PACKAGE_LIBRETRO_POCKETSNES]  }
       snes9x_next: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_SNES9X_NEXT] }
-      snes9x:      { requireAnyOf: [BR2_PACKAGE_LIBRETRO_SNES9X] }
-      bsnes:       { requireAnyOf: [BR2_PACKAGE_LIBRETRO_BSNES] }
-      bsnes_hd:    { requireAnyOf: [BR2_PACKAGE_LIBRETRO_BSNES_HD] }
+      snes9x:      { requireAnyOf: [BR2_PACKAGE_LIBRETRO_SNES9X]      }
+      bsnes:       { requireAnyOf: [BR2_PACKAGE_LIBRETRO_BSNES]       }
+      bsnes_hd:    { requireAnyOf: [BR2_PACKAGE_LIBRETRO_BSNES_HD]    }
+      mesen-s:     { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MESENS]      }
   comment_en: |
     For more info: https://wiki.batocera.org/systems:snes
   comment_fr: |
@@ -46,6 +47,7 @@ c64:
       xscpu64:     { requireAnyOf: [BR2_PACKAGE_VICE], incompatible_extensions: [m3u,7z] }
     libretro:
       vice_x64:    { requireAnyOf: [BR2_PACKAGE_LIBRETRO_VICE] }
+      vice_x64sc:  { requireAnyOf: [BR2_PACKAGE_LIBRETRO_VICE] }
 
 cplus4:
   name:       Commodore Plus4
@@ -58,6 +60,8 @@ cplus4:
   emulators:
     vice:
       xplus4:      { requireAnyOf: [BR2_PACKAGE_VICE], incompatible_extensions: [m3u,7z] }
+    libretro:
+      vice_xplus4: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_VICE] }
 
 c128:
   name:       Commodore 128
@@ -69,6 +73,8 @@ c128:
   emulators:
     vice:
       x128:          { requireAnyOf: [BR2_PACKAGE_VICE], incompatible_extensions: [m3u,7z] }
+    libretro:
+      vice_x128:     { requireAnyOf: [BR2_PACKAGE_LIBRETRO_VICE] }
 
 c20:
   name:       Commodore VIC-20
@@ -80,6 +86,8 @@ c20:
   emulators:
     vice:
       xvic:      { requireAnyOf: [BR2_PACKAGE_VICE], incompatible_extensions: [m3u,7z] }
+    libretro:
+      vice_xvic: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_VICE] }
 
 pet:
   name:       Commodore PET
@@ -91,6 +99,8 @@ pet:
   emulators:
     vice:
       xpet:      { requireAnyOf: [BR2_PACKAGE_VICE], incompatible_extensions: [m3u,7z] }
+    libretro:
+      vice_xpet: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_VICE] }
 
 amiga500:
   name:       Amiga OCS/ECS
@@ -176,6 +186,7 @@ nes:
     libretro:
       fceumm:   { requireAnyOf: [BR2_PACKAGE_LIBRETRO_FCEUMM] }
       nestopia: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_NESTOPIA] }
+      mesen:    { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MESEN] }
   comment_en: |
     For more info: https://wiki.batocera.org/systems:nes
   comment_fr: |
@@ -243,7 +254,7 @@ gbc:
       gambatte: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_GAMBATTE] }
       mgba:     { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MGBA] }
       vba-m:    { requireAnyOf: [BR2_PACKAGE_LIBRETRO_VBA_M] }
-      mesens:  { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MESENS] }
+      mesen-s:  { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MESENS] }
   comment_en: |
     For more info: https://wiki.batocera.org/systems:gbc
   comment_fr: |
@@ -260,7 +271,7 @@ gb:
       gambatte: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_GAMBATTE] }
       mgba:     { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MGBA] }
       vba-m:    { requireAnyOf: [BR2_PACKAGE_LIBRETRO_VBA_M] }
-      mesens:  { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MESENS] }
+      mesen-s:  { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MESENS] }
   comment_en: |
     For more info: https://wiki.batocera.org/systems:gb
   comment_fr: |
@@ -355,6 +366,7 @@ lcdgames:
   emulators:
     libretro:
       gw:   { requireAnyOf: [BR2_PACKAGE_LIBRETRO_GW]                                   }
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
     mame:
       mame: { requireAnyOf: [BR2_PACKAGE_MAME], incompatible_extensions: [mgw]          }
 
@@ -368,11 +380,12 @@ gameandwatch:
   emulators:
     libretro:
       gw:   { requireAnyOf: [BR2_PACKAGE_LIBRETRO_GW]                                   }
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
     mame:
       mame: { requireAnyOf: [BR2_PACKAGE_MAME], incompatible_extensions: [mgw]          }
 
 dreamcast:
-  name:       Sega Dreamcast
+  name:       Dreamcast
   manufacturer: Sega
   release: 1998
   hardware: console
@@ -384,13 +397,15 @@ dreamcast:
       flycast:        { requireAnyOf: [BR2_PACKAGE_FLYCAST]          }
     redream:
       redream:        { requireAnyOf: [BR2_PACKAGE_REDREAM]          }
+    demul:
+      demul:          { requireAnyOf: [BR2_PACKAGE_DEMUL]            }
   comment_en: |
     For more info: https://wiki.batocera.org/systems:dreamcast
   comment_fr: |
     Trouvez la documentation ici: https://wiki.batocera.org/systems:dreamcast
 
 naomi:
-  name:       Sega Naomi
+  name:       Naomi
   manufacturer: Sega
   release: 1998
   hardware: arcade
@@ -401,6 +416,8 @@ naomi:
       flycast:  { requireAnyOf: [BR2_PACKAGE_LIBRETRO_FLYCAST]  }
     flycast:
       flycast:  { requireAnyOf: [BR2_PACKAGE_FLYCAST]           }
+    demul:
+      demul:    { requireAnyOf: [BR2_PACKAGE_DEMUL]             }
 
 atomiswave:
   name:       Atomiswave
@@ -414,9 +431,11 @@ atomiswave:
       flycast: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_FLYCAST] }
     flycast:
       flycast: { requireAnyOf: [BR2_PACKAGE_FLYCAST]          }
+    demul:
+      demul:   { requireAnyOf: [BR2_PACKAGE_DEMUL]            }
 
 megadrive:
-  name:       Sega Megadrive
+  name:       Mega Drive
   manufacturer: Sega
   release: 1988
   hardware: console
@@ -446,7 +465,7 @@ segacd:
       picodrive:     { requireAnyOf: [BR2_PACKAGE_LIBRETRO_PICODRIVE], incompatible_extensions: [m3u] }
 
 sega32x:
-  name:       Sega 32x
+  name:       32x
   manufacturer: Sega
   release: 1994
   hardware: console
@@ -457,7 +476,7 @@ sega32x:
       picodrive: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_PICODRIVE] }
 
 mastersystem:
-  name:       Sega Master System
+  name:       Master System
   manufacturer: Sega
   release: 1985
   hardware: console
@@ -468,7 +487,7 @@ mastersystem:
       picodrive:     { requireAnyOf: [BR2_PACKAGE_LIBRETRO_PICODRIVE] }
 
 gamegear:
-  name:       Sega Game Gear
+  name:       Game Gear
   manufacturer: Sega
   release: 1990
   hardware: portable
@@ -479,7 +498,7 @@ gamegear:
       picodrive:     { requireAnyOf: [BR2_PACKAGE_LIBRETRO_PICODRIVE] }
 
 sg1000:
-  name:       Sega SG1000
+  name:       SG-1000
   manufacturer: Sega
   release: 1983
   hardware: console
@@ -491,7 +510,7 @@ sg1000:
       genesisplusgx: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_GENESISPLUSGX] }
 
 psp:
-  name:       Sony Playstation Portable
+  name:       PlayStation Portable
   manufacturer: Sony
   release: 2004
   hardware: portable
@@ -507,7 +526,7 @@ psp:
     Trouvez la documentation ici: https://wiki.batocera.org/systems:psp
 
 psx:
-  name:       Sony Playstation 1
+  name:       PlayStation
   manufacturer: Sony
   release: 1994
   hardware: console
@@ -835,6 +854,19 @@ atari800:
     libretro:
       atari800: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_ATARI800] }
 
+xegs:
+  name:       Atari XE Game System
+  manufacturer: Atari
+  release: 1987
+  hardware: computer
+  extensions: [atr, dsk, xfd, bin, rom, car, zip, 7z]
+  emulators:
+    mame:
+      mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
+  comment_en: |
+          Requires MAME BIOS file xegs.zip
+          Software list mode recommended
+
 atari2600:
   name:       Atari 2600
   manufacturer: Atari
@@ -1059,6 +1091,9 @@ vectrex:
   emulators:
     libretro:
       vecx: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_VECX] }
+    mame:
+      mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
+
 
 lutro:
   name:       Lutro
@@ -1145,6 +1180,8 @@ msx1:
     libretro:
       bluemsx: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_BLUEMSX] }
       fmsx: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_FMSX] }
+    openmsx:
+      openmsx: { requireAnyOf: [BR2_PACKAGE_OPENMSX] }
   comment_en: |
     ## BIOS ##
 
@@ -1206,6 +1243,8 @@ msx2:
     libretro:
       bluemsx: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_BLUEMSX] }
       fmsx: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_FMSX] }
+    openmsx:
+      openmsx: { requireAnyOf: [BR2_PACKAGE_OPENMSX] }
   comment_en: |
     ## BIOS ##
 
@@ -1267,6 +1306,8 @@ msx2+:
     libretro:
       bluemsx: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_BLUEMSX] }
       fmsx: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_FMSX] }
+    openmsx:
+      openmsx: { requireAnyOf: [BR2_PACKAGE_OPENMSX] }
   comment_en: |
     ## BIOS ##
 
@@ -1327,6 +1368,8 @@ msxturbor:
   emulators:
     libretro:
       bluemsx: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_BLUEMSX] }
+    openmsx:
+      openmsx: { requireAnyOf: [BR2_PACKAGE_OPENMSX] }
   comment_en: |
     ## BIOS ##
 
@@ -1404,7 +1447,7 @@ zx81:
     "Settings/Input/Input User 1 Binds/User 1 Device type: Retropad" en "Cursor Joystick"
 
 zxspectrum:
-  name:       ZXSpectrum
+  name:       ZX Spectrum
   manufacturer: Sinclair
   release: 1982
   hardware: computer
@@ -1465,7 +1508,7 @@ apple2:
       linapple: { requireAnyOf: [BR2_PACKAGE_LINAPPLE] }
 
 saturn:
-  name:       Sega Saturn
+  name:       Saturn
   manufacturer: Sega
   release: 1994
   hardware: console
@@ -1477,7 +1520,7 @@ saturn:
       yabasanshiro:  { requireAnyOf: [BR2_PACKAGE_LIBRETRO_YABASANSHIRO] }
 
 jaguar:
-  name:       Atari Jaguar
+  name:       Jaguar
   manufacturer: Atari
   release: 1993
   hardware: console
@@ -1488,7 +1531,7 @@ jaguar:
       virtualjaguar: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_VIRTUALJAGUAR] }
 
 gamecube:
-  name:       Nintendo GameCube
+  name:       GameCube
   manufacturer: Nintendo
   release: 2001
   hardware: console
@@ -1505,8 +1548,23 @@ gamecube:
   comment_fr: |
     Trouvez la documentation ici: https://wiki.batocera.org/systems:gamecube
 
+triforce:
+  name:       Triforce
+  manufacturer: Namco, Sega, Nintendo
+  release: 2003
+  hardware: arcade
+  extensions: [gcm, iso, gcz, ciso, wbfs, elf, dol, m3u]
+  platform:   triforce, arcade
+  emulators:
+    dolphin_triforce:
+      dolphin_triforce:  { requireAnyOf: [BR2_PACKAGE_DOLPHIN_TRIFORCE]       }
+  comment_en: |
+    Triforce is an arcade machine based on the GameCube's hardware. This build only supports booting Mario Kart GP 2.
+
+    For the most up-to-date information, visit https://wiki.batocera.org/systems:triforce
+
 wii:
-  name:       Nintendo Wii
+  name:       Wii
   manufacturer: Nintendo
   release: 2006
   hardware: console
@@ -1534,7 +1592,7 @@ wii:
     Trouvez la documentation ici: https://wiki.batocera.org/systems:wii
 
 ps2:
-  name:       Sony Playstation 2
+  name:       PlayStation 2
   manufacturer: Sony
   release: 2000
   hardware: console
@@ -1548,12 +1606,12 @@ ps2:
     play:
       play: { requireAnyOf: [BR2_PACKAGE_PLAY] }
   comment_en: |
-    For more info: https://wiki.batocera.org/systems:playstation_2
+    For more info: https://wiki.batocera.org/systems:ps2
   comment_fr: |
-    Trouvez la documentation ici: https://wiki.batocera.org/systems:playstation_2
+    Trouvez la documentation ici: https://wiki.batocera.org/systems:ps2
 
 ps3:
-  name:       Sony Playstation 3
+  name:       PlayStation 3
   manufacturer: Sony
   release: 2006
   hardware: console
@@ -1567,13 +1625,13 @@ ps3:
     PSN digital games are installed in rpcs3-config, create a text file ending with .psn that contains the game's ID.
     First time you load a game, it takes time (a progress bar is visible). It doesn't happen next times.
 
-    For more info: https://wiki.batocera.org/systems:playstation_3
+    For more info: https://wiki.batocera.org/systems:ps3
   comment_fr: |
     Vous devez préalablement charger le firmware en lançant rpcs3-config depuis menu>f1>Applications puis File>Install firmware.
     Les roms ps3 sont des dossiers ; ils doivent être renommés pour terminer par .ps3
     La première fois que vous chargez un jeu, cela met du temps (une barre de progression est visible). Cela ne se produit pas les fois suivantes.
 
-    Trouvez la documentation ici : https://wiki.batocera.org/systems:playstation_3
+    Trouvez la documentation ici : https://wiki.batocera.org/systems:ps3
 
 3do:
   name:       3DO Interactive Multiplayer
@@ -1616,7 +1674,7 @@ x1:
       x1: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_XMIL] }
 
 3ds:
-  name:       Nintendo 3DS
+  name:       3DS
   manufacturer: Nintendo
   release: 2011
   hardware: portable
@@ -1636,9 +1694,8 @@ openbor:
   emulators:
     openbor:
       openbor4432: { requireAnyOf: [BR2_PACKAGE_OPENBOR4432] }
-      openbor6330: { requireAnyOf: [BR2_PACKAGE_OPENBOR6330] }
       openbor6412: { requireAnyOf: [BR2_PACKAGE_OPENBOR6412] }
-      openbor6510: { requireAnyOf: [BR2_PACKAGE_OPENBOR6510] }
+      openbor7142: { requireAnyOf: [BR2_PACKAGE_OPENBOR7142] }
   comment_en: |
     For more info: https://wiki.batocera.org/systems:openbor
   comment_fr: |
@@ -1655,7 +1712,7 @@ satellaview:
     libretro:
       pocketsnes:   { requireAnyOf: [BR2_PACKAGE_LIBRETRO_POCKETSNES] }
       snes9x:       { requireAnyOf: [BR2_PACKAGE_LIBRETRO_SNES9X]     }
-      mesens:       { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MESENS]     }
+      mesen-s:      { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MESENS]     }
 
 sufami:
   name:       SuFami Turbo
@@ -1669,7 +1726,7 @@ sufami:
       snes9x: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_SNES9X] }
 
 pokemini:
-  name:       Pokemon-Mini
+  name:       Pokemon Mini
   manufacturer: Nintendo
   release: 2001
   hardware: portable
@@ -1679,7 +1736,7 @@ pokemini:
       pokemini: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_POKEMINI] }
 
 gx4000:
-  name:       Amstrad GX4000
+  name:       GX4000
   manufacturer: Amstrad
   release: 1991
   hardware: console
@@ -1714,7 +1771,7 @@ thomson:
       theodore:  { requireAnyOf: [BR2_PACKAGE_LIBRETRO_THEODORE] }
 
 pc88:
-  name:       NEC PC-8800
+  name:       PC-8800
   manufacturer: NEC
   release: 1981
   hardware: computer
@@ -1725,7 +1782,7 @@ pc88:
       quasi88:  { requireAnyOf: [BR2_PACKAGE_LIBRETRO_PC88] }
 
 pc98:
-  name:       NEC PC-9800
+  name:       PC-9800
   manufacturer: NEC
   release: 1982
   hardware: computer
@@ -1736,7 +1793,7 @@ pc98:
       np2kai:  { requireAnyOf: [BR2_PACKAGE_LIBRETRO_PC98] }
 
 fmtowns:
-  name:       Fujitsu FM-TOWNS
+  name:       FM-TOWNS
   manufacturer: Fujitsu
   release: 1987
   hardware: computer
@@ -1875,7 +1932,7 @@ easyrpg:
   manufacturer: EasyRPG Team
   release: 2000
   hardware: port
-  extensions: [easyrpg, squashfs]
+  extensions: [easyrpg, squashfs, zip]
   emulators:
     easyrpg:
       easyrpg: { requireAnyOf: [BR2_PACKAGE_EASYRPG_PLAYER] }
@@ -1931,7 +1988,7 @@ library:
   force:      True
 
 model3:
-  name:       Sega Model 3
+  name:       Model 3
   manufacturer: Sega
   release: 1996
   hardware: arcade
@@ -1939,7 +1996,7 @@ model3:
   platform: model3, arcade
   emulators:
     supermodel:
-      supermodel: { requireAnyOf: [BR2_PACKAGE_SUPERMODEL] }
+      supermodel: { requireAnyOf: [BR2_PACKAGE_SUPERMODEL, BR2_PACKAGE_SUPERMODEL_RPI4] }
   comment_en: |
     ## SEGA MODEL 3 IMPORTANT INFO ##
 
@@ -2014,7 +2071,7 @@ fpinball:
     Trouvez la documentation ici: https://wiki.batocera.org/systems:windows
 
 flash:
-  name:       Adobe Flash Player
+  name:       Flash Player
   manufacturer: Adobe
   release: 1996
   hardware: port
@@ -2026,7 +2083,7 @@ flash:
       ruffle: { requireAnyOf: [BR2_PACKAGE_RUFFLE] }
 
 xbox:
-  name:       Microsoft XBOX
+  name:       Xbox
   manufacturer: Microsoft
   release: 2003
   hardware: console
@@ -2075,7 +2132,7 @@ steam:
           Run batocera-steam-update to update the roms directory according to your installed games.
 
 supervision:
-  name:       Watara Supervision
+  name:       Supervision
   manufacturer: Watara
   release: 1992
   hardware: portable
@@ -2148,7 +2205,7 @@ sonicretro:
     The dev menu option is needed to run mods.
 
 model2:
-  name:       Sega Model 2
+  name:       Model 2
   manufacturer: Sega
   release: 1993
   hardware: arcade
@@ -2219,7 +2276,7 @@ model2:
 
 scv:
   name:       Super Cassette Vision
-  manufacturer: Epoch Co
+  manufacturer: Epoch
   release: 1984
   hardware: console
   extensions: [bin, "0"]
@@ -2254,10 +2311,12 @@ cdi:
   hardware: console
   extensions: [chd, cue, toc, nrg, gdi, iso, cdr]
   emulators:
+    libretro:
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
     mame:
       mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
   comment_en: |
-          Requires MAME BIOS file cdimono1.zip or .7z in either cdi or BIOS folder.
+          Requires MAME BIOS file cdimono1.zip
 
 advision:
   name:       Adventure Vision
@@ -2266,18 +2325,22 @@ advision:
   hardware: console
   extensions: [bin, zip, 7z]
   emulators:
+    libretro:
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
     mame:
       mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
   comment_en: |
-          Requires MAME BIOS file advision.zip or .7z in either advision or BIOS folder.
+          Requires MAME BIOS file advision.zip
 
-tvgames:
-  name:       TV Games
+plugnplay:
+  name:       Plug and Play TV Games
   manufacturer: Various
   release: 2002
   hardware: console
   extensions: [zip, 7z]
   emulators:
+    libretro:
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
     mame:
       mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
 
@@ -2288,6 +2351,8 @@ megaduck:
   hardware: portable
   extensions:  [bin, zip, 7z]
   emulators:
+    libretro:
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
     mame:
       mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
 
@@ -2298,6 +2363,8 @@ pv1000:
   hardware: console
   extensions: [bin, zip, 7z]
   emulators:
+    libretro:
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
     mame:
       mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
 
@@ -2308,22 +2375,70 @@ gamate:
   hardware: portable
   extensions: [bin, zip, 7z]
   emulators:
+    libretro:
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
     mame:
       mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
   comment_en: |
-          Requires MAME BIOS file gamate.zip or .7z in either gamate or BIOS folder.
+          Requires MAME BIOS file gamate.zip
 
 crvision:
   name:       CreatiVision
   manufacturer: VTech
   release: 1982
   hardware: console
+  theme: creativision
   extensions: [bin, rom, zip, 7z]
   emulators:
+    libretro:
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
     mame:
       mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
   comment_en: |
-          Requires MAME BIOS file crvision.zip or .7z in either crvision or BIOS folder.
+          Requires MAME BIOS file crvision.zip
+
+socrates:
+  name:       Socrates
+  manufacturer: VTech
+  release: 1988
+  hardware: console
+  extensions: [bin, zip, 7z]
+  emulators:
+    libretro:
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
+    mame:
+      mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
+  comment_en: |
+          Requires MAME BIOS file socrates.zip
+          Software list mode recommended
+
+vsmile:
+  name:       V.Smile
+  manufacturer: VTech
+  release: 2005
+  hardware: console
+  extensions: [u1, u3, bin, zip, 7z]
+  emulators:
+    libretro:
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
+    mame:
+      mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
+  comment_en: |
+          Requires MAME BIOS file vsmile.zip
+
+supracan:
+  name:       Super A'Can
+  manufacturer: Funtech Entertainment
+  release: 1995
+  hardware: console
+  extensions: [bin, zip, 7z]
+  emulators:
+    libretro:
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
+    mame:
+      mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
+  comment_en: |
+          Sound support is preliminary
 
 gamecom:
   name:       Game.com
@@ -2332,10 +2447,12 @@ gamecom:
   hardware: portable
   extensions: [bin, tgc, zip, 7z]
   emulators:
+    libretro:
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
     mame:
       mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
   comment_en: |
-          Requires MAME BIOS file gamecom.zip or .7z in either gamecom or BIOS folder.
+          Requires MAME BIOS file gamecom.zip
 
 gamepock:
   name:       Game Pocket Computer
@@ -2344,10 +2461,12 @@ gamepock:
   hardware: portable
   extensions: [bin, zip, 7z]
   emulators:
+    libretro:
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
     mame:
       mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
   comment_en: |
-          Requires MAME BIOS file gamepock.zip or .7z in either gamepock or BIOS folder.
+          Requires MAME BIOS file gamepock.zip
 
 fm7:
   name:       FM-7
@@ -2356,49 +2475,120 @@ fm7:
   hardware: computer
   extensions: [wav, t77, mfi, dfi, hfe, mfm, td0, imd, d77, d88, 1dd, cqm, cqi, dsk, zip, 7z]
   emulators:
+    libretro:
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
     mame:
       mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
   comment_en: |
-          Requires MAME BIOS file fm7.zip or .7z in either fm7 or BIOS folder.
-          Optionally fm77av.zip or .7z for FM-77AV support.
+          Requires MAME BIOS file fm7.zip, and optionally fm77av.zip for FM-77AV support.
+
+archimedes:
+  name:       Archimedes
+  manufacturer: Acorn Computers
+  release: 1987
+  hardware: computer
+  extensions: [mfi, dfi, hfe, mfm, td0, imd, d77, d88, 1dd, cqm, cqi, dsk, ima, img, ufi, 360, ipf, adf, apd, jfd, ads, adm, adl, ssd, bbc, dsd, st, msa, chd, zip, 7z]
+  emulators:
+    libretro:
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
+    mame:
+      mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
+  comment_en: |
+          Requires MAME BIOS files aa310.zip and archimedes_keyboard.zip
+          Using software list mode is recommended.
+          Double-click the floppy drive in the lower left to open the contents, double-click the app/game to run it.
+
+atom:
+  name:       Atom
+  manufacturer: Acorn Computers
+  release: 1979
+  hardware: computer
+  extensions: [wav, tap, csw, uef, mfi, dfi, hfe, mfm, td0, imd, d77, d88, 1dd, cqm, cqi, dsk, 40t, atm, bin, rom, zip, 7z]
+  emulators:
+    libretro:
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
+    mame:
+      mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
+  comment_en: |
+          Requires MAME BIOS file atom.zip
+          Using software list mode is recommended. Software list cassettes don't work but floppies do.
+          Disks will automatically show contents, if the program isn't auto-launched, type the program name followed by a double quote (mapped to shift-2) and hit enter to run.
+
+electron:
+  name:       Electron
+  manufacturer: Acorn Computers
+  release: 1983
+  hardware: computer
+  extensions: [wav, csw, uef, mfi, dfi, hfe, mfm, td0, imd, d77, d88, 1dd, cqm, cqi, dsk, ssd, bbc, img, dsd, adf, ads, adm, adl, rom, bin, zip, 7z]
+  emulators:
+    libretro:
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
+    mame:
+      mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
+  comment_en: |
+          Requires MAME BIOS files electron.zip, electron64.zip, electron_plus1.zip, electron_plus3.zip
+          Using software list mode (cassette) is recommended.
+          Tapes should auto-load, use the MAME menu to stop/play/rewind if needed.
 
 apfm1000:
-  name:       APF M-1000
+  name:       M-1000
   manufacturer: APF Electronics
   release: 1978
   hardware: console
   extensions: [bin, zip, 7z]
   emulators:
+    libretro:
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
     mame:
       mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
   comment_en: |
-          Requires MAME BIOS file apfm1000.zip or .7z in either apfm or BIOS folder.
+          Requires MAME BIOS file apfm1000.zip
 
 bbc:
   name:       BBC Micro
-  manufacturer: Acorn
+  manufacturer: Acorn Computers
   release: 1981
   hardware: computer
+  theme: bbcmicro
   extensions: [mfi, dfi, hfe, mfm, td0, imd, d77, d88, 1dd, cqm, cqi, dsk, ima, img, ufi, 360, ipf, ssd, bbc, dsd, adf, ads, adm, adl, fsd, wav, tap, bin, zip, 7z]
   emulators:
+    libretro:
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
     mame:
       mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
   comment_en: |
-          Requires MAME BIOS files bbcb, bbc_acorn8271, & saa5050.zip or .7z in either bbc or BIOS folder.
-          Also sample pack bbc.zip or .7z in BIOS/mame/samples
+          Requires MAME BIOS files bbcb.zip, bbc_acorn8271.zip, & saa5050.zip
+          Also sample pack bbc.zip in bios/mame/samples
+
+camplynx:
+  name:       Camputers Lynx
+  manufacturer: Camputers
+  release: 1983
+  hardware: computer
+  extensions: [wav, tap, zip, 7z]
+  emulators:
+    libretro:
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
+    mame:
+      mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
+  comment_en: |
+          Requires MAME BIOS files lynx128k.zip, lynx96k.zip, lynx48k.zip
+          Using software list mode is recommended.
 
 adam:
-  name:       Coleco ADAM
+  name:       ADAM
   manufacturer: Coleco
   release: 1983
   hardware: computer
   extensions: [wav, ddp, mfi, dfi, hfe, mfm, td0, imd, d77, d88, 1dd, cqm, cqi, dsk, rom, col, bin, zip, 7z]
   emulators:
+    libretro:
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
     mame:
       mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
   comment_en: |
-          Requires the following MAME BIOS files as zip or 7z in the adam or BIOS folder:
-          adam, adam_ddp, adam_fdc, adam_kb, & adam_prn
+          Requires the following MAME BIOS files:
+          adam.zip, adam_ddp.zip, adam_fdc.zip, adam_kb.zip, & adam_prn.zip
 
 arcadia:
   name:       Arcadia 2001
@@ -2407,6 +2597,8 @@ arcadia:
   hardware: console
   extensions: [bin, zip, 7z]
   emulators:
+    libretro:
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
     mame:
       mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
 
@@ -2417,22 +2609,27 @@ gmaster:
   hardware: portable
   extensions: [bin, zip, 7z]
   emulators:
+    libretro:
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
     mame:
       mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
   comment_en: |
-          Requires MAME BIOS file gmaster.zip or .7z in either gmaster or BIOS folder.
+          Requires MAME BIOS file gmaster.zip
 
 astrocde:
   name:       Astrocade
   manufacturer: Bally
   release: 1978
   hardware: console
+  theme: astrocade
   extensions: [bin, zip, 7z]
   emulators:
+    libretro:
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
     mame:
       mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
   comment_en: |
-          Requires MAME BIOS file astrocde.zip or .7z in either astrocde or BIOS folder.
+          Requires MAME BIOS file astrocde.zip
 
 ti99:
   name:       TI-99
@@ -2441,23 +2638,27 @@ ti99:
   hardware: computer
   extensions: [rpk, wav, zip, 7z]
   emulators:
+    libretro:
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
     mame:
       mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
   comment_en: |
-          Requires MAME BIOS file ti99_4a.zip or .7z in either ti99 or BIOS folder.
-          Cartridges need to be in .rpk format and unzipped - the MAME software list files (.bin) will not run properly.
+          Requires MAME BIOS file ti99_4a.zip
+          Cartridges need to be in .rpk format and unzipped if not using software lists.
 
 tutor:
-  name:       Tomy Tutor
+  name:       Tutor
   manufacturer: Tomy
   release: 1983
   hardware: computer
   extensions: [bin, wav, zip, 7z]
   emulators:
+    libretro:
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
     mame:
       mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
   comment_en: |
-          Requires MAME BIOS file tutor.zip or .7z in either tutor or BIOS folder.
+          Requires MAME BIOS file tutor.zip
           To get through the loading menu, R1 will move down and A/East will select.
 
 coco:
@@ -2467,10 +2668,27 @@ coco:
   hardware: computer
   extensions: [wav, cas, ccc, rom, zip, 7z]
   emulators:
+    libretro:
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
     mame:
       mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
   comment_en: |
-          Requires MAME BIOS file coco.zip or .7z in either coco or BIOS folder.
+          Requires MAME BIOS file coco.zip
+
+vgmplay:
+  name:       Video Game Music Player
+  manufacturer: Various
+  release: 1980
+  hardware: computer
+  extensions: [vgm, vgz, zip, 7z]
+  emulators:
+    libretro:
+      mamevirtual: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
+    mame:
+      mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
+  comment_en: |
+          Software lists recommended. QSound can be CPU-intensive.
+          Use the File Manager in the MAME menu to change tracks.
 
 switch:
   name:       Switch
@@ -2483,6 +2701,8 @@ switch:
   emulators:
     yuzu:
       yuzu: { requireAnyOf: [BR2_PACKAGE_YUZU] }
+    ryujinx:
+      ryujinx: { requireAnyOf: [BR2_PACKAGE_RYUJINX] }
 
 vitaquake2:
   name:       Quake II
@@ -2511,13 +2731,14 @@ zc210:
   manufacturer: Ports
   release: 1999
   hardware: console
+  theme: zeldac
   extensions: [qst]
   emulators:
     libretro:
       zc210:  { requireAnyOf: [BR2_PACKAGE_LIBRETRO_ZC210] }
 
 vemulator:
-  name:       SEGA Dreamcast VMU
+  name:       Dreamcast VMU
   manufacturer: Sega
   release: 1998
   hardware: console
@@ -2631,3 +2852,263 @@ xrick:
     Put the data.zip in this directory.
   comment_fr: |
     Placez ici vos fichiers data.zip pour xrick.
+    
+macintosh:
+  name:       Macintosh
+  manufacturer: Apple
+  release: 1984
+  hardware: computer
+  extensions: [dsk, zip, 7z, mfi, dfi, hfe, mfm, td0, imd, d77, d88, 1dd, cqm, cqi, dsk, ima, img, ufi, ipf, dc42, woz, 2mg, 360, chd, cue, toc, nrg, gdi, iso, cdr, hd, hdv, 2mg, hdi]
+  emulators:
+    libretro:
+      minivmac: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MINIVMAC], incompatible_extensions: [7z, mfi, dfi, hfe, mfm, td0, imd, d77, d88, 1dd, cqm, cqi, dsk, ima, img, ufi, ipf, dc42, woz, 2mg, 360, chd, cue, toc, nrg, gdi, iso, cdr, hd, hdv, 2mg, hdi] }
+      mess:     { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
+    mame:
+      mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
+  comment_en: |
+          MAME requires a number of BIOS and device files, place in the bios folder in zip format.
+          Boot disks are from MAME's software lists, floppy images need to be extracted and renamed.
+          It is recommended to use a hard drive option if available, System 6.0.8 if not.
+          From mac_flop:
+          macos3.img = sytem tools.img from sys30.zip
+          macos608.img = system tools.img from sys608.zip
+          From mac_hdflop:
+          macos701 = disk tools.img from sys701.zip
+          macos75 = SSW750_DiskTools.img from sys75.zip
+          From mac_hdd:
+          mac601.chd, mac701.chd, and mac755.chd
+          lr-minivmac requires MacII.ROM and MacIIx.ROM.
+          If booting from a hard drive, floppies may not load at boot. For best results, make a copy of one of the bootable drives, load disks manually via the MAME menu, and copy or install them to the hard drive image.
+
+naomi2:
+  name:       Naomi 2
+  manufacturer: Sega
+  release: 2000
+  hardware: arcade
+  extensions: [zip, 7z]
+  platform: naomi2, arcade
+  emulators:
+    demul:
+      demul: { requireAnyOf: [BR2_PACKAGE_DEMUL] }
+  comment_en: |
+    ---------------------------------
+    ## NAOMI 2 IMPORTANT INFO ##
+    ---------------------------------
+
+    You can now play Naomi 2 games using Demul with Wine.
+    Roms should be stored in the appropriate naomi2 directory.
+    You will need a Naomi 2 bios, please add the naomi2.zip file to your bios directory.
+
+    Performance depends on your x86_64 system hardware.
+    If you get audio stuttering & slow music, your system isn't performant enough to run this emulator.
+
+    Note: Your graphics card requires Vulkan drivers for Demul to work.
+
+    -----------
+    First Start
+    -----------
+
+    You need to run a ROM at least once AND be connected to the internet.
+    This creates the directory structure & installs the associated Windows libraries for Wine.
+
+    Note: It may take some time before the game starts with the first use, this is NORMAL!
+    *** Please be patient as it can take up to 2 minutes depending on your internet connection speed ***
+
+    -----------
+    Controllers
+    -----------
+
+    Currently controllers cannot be configured using the desktop app.
+    This is a limitation of the Demul app under Wine but also a known buggy pad plugin, even under Windows.
+    Currently we only map Player 1 using the emulators default keyboard configuration using evmapy.
+
+    Note: Future consideration:
+
+    Demul uses decimal for pad configuration in the padDemul.ini
+    To determine the decimal we have to convert the hexadecimal to decimal.
+    You can edit arcade controls they're under the [JAMMAx_x] headings depending on the number of controllers.
+
+    Controller 1 = 0x100 & 0x200 for the buttons & the 2x analog sticks.
+    Controller 2 = 0x101 & 0x201 etc.
+    
+    Device input hex codes are listed in the appropriate linux kernel input.h depending on the controller type.
+    i.e. A gamepad's 'start' button is 0x13b
+    Therefore controller 1's start button is 0100013b in hex or 16777531 in decimal.
+    Controller 2 would be 0101013b / 16843067 accordingly.
+
+    ------------
+    Service Menu
+    ------------
+
+    Note: Keyboard required.
+    You can access the Service Menu using F4 and then use F2 to navigate with F4 to select.
+
+    Enjoy Naomi 2 games under Linux!
+
+hikaru:
+  name:       Hikaru
+  manufacturer: Sega
+  release: 1999
+  hardware: arcade
+  extensions: [zip, 7z]
+  platform: hikaru, arcade
+  emulators:
+    demul:
+      demul: { requireAnyOf: [BR2_PACKAGE_DEMUL] }
+  comment_en: |
+    ---------------------------------
+    ## HIKARU IMPORTANT INFO ##
+    ---------------------------------
+
+    You can now play Sega Hikaru games using Demul with Wine.
+    Roms should be stored in the appropriate hikaru directory.
+    You will need a Hikaru bios, please add the hikaru.zip file to your bios directory.
+
+    Performance depends on your x86_64 system hardware.
+    If you get audio stuttering & slow music, your system isn't performant enough to run this emulator.
+
+    Note: Your graphics card requires Vulkan drivers for Demul to work.
+
+    -----------
+    First Start
+    -----------
+
+    You need to run a ROM at least once AND be connected to the internet.
+    This creates the directory structure & installs the associated Windows libraries for Wine.
+
+    Note: It may take some time before the game starts with the first use, this is NORMAL!
+    *** Please be patient as it can take up to 2 minutes depending on your internet connection speed ***
+
+    -----------
+    Controllers
+    -----------
+
+    Currently controllers cannot be configured using the desktop app.
+    This is a limitation of the Demul app under Wine but also a known buggy pad plugin, even under Windows.
+    Currently we only map Player 1 using the emulators default keyboard configuration using evmapy.
+
+    ------------
+    Service Menu
+    ------------
+
+    Note: Keyboard required.
+    You can access the Service Menu using F4 and then use F2 to navigate with F4 to select.
+
+    Enjoy Sega Hikaru games under Linux!
+
+gaelco:
+  name:       Gaelco
+  manufacturer: Sega
+  release: 1999
+  hardware: arcade
+  extensions: [zip, 7z]
+  platform: gaelco, arcade
+  emulators:
+    demul:
+      demul: { requireAnyOf: [BR2_PACKAGE_DEMUL] }
+  comment_en: |
+    ---------------------------------
+    ## GAELCO IMPORTANT INFO ##
+    ---------------------------------
+
+    You can now play Sega Gaelco games using Demul with Wine.
+    Roms should be stored in the appropriate gaelco directory.
+
+    Performance depends on your x86_64 system hardware.
+    If you get audio stuttering & slow music, your system isn't performant enough to run this emulator.
+
+    Note: Your graphics card requires Vulkan drivers for Demul to work.
+
+    -----------
+    First Start
+    -----------
+
+    You need to run a ROM at least once AND be connected to the internet.
+    This creates the directory structure & installs the associated Windows libraries for Wine.
+
+    Note: It may take some time before the game starts with the first use, this is NORMAL!
+    *** Please be patient as it can take up to 2 minutes depending on your internet connection speed ***
+
+    -----------
+    Controllers
+    -----------
+
+    Currently controllers cannot be configured using the desktop app.
+    This is a limitation of the Demul app under Wine but also a known buggy pad plugin, even under Windows.
+    Currently we only map Player 1 using the emulators default keyboard configuration using evmapy.
+
+    ------------
+    Service Menu
+    ------------
+
+    Note: Keyboard required.
+    You can access the Service Menu using F4 and then use F2 to navigate with F4 to select.
+
+    Enjoy Sega Gaelco games under Linux!
+
+cave3rd:
+  name:       Cave CV1000
+  manufacturer: Sega
+  release: 2004
+  hardware: arcade
+  extensions: [zip, 7z]
+  platform: cave3rd, arcade
+  emulators:
+    demul:
+      demul: { requireAnyOf: [BR2_PACKAGE_DEMUL] }
+  comment_en: |
+    ---------------------------------
+    ## GAELCO IMPORTANT INFO ##
+    ---------------------------------
+
+    You can now play Sega Cave CV1000 games using Demul with Wine.
+    Roms should be stored in the appropriate cave3rd directory.
+
+    Performance depends on your x86_64 system hardware.
+    If you get audio stuttering & slow music, your system isn't performant enough to run this emulator.
+
+    Note: Your graphics card requires Vulkan drivers for Demul to work.
+
+    -----------
+    First Start
+    -----------
+
+    You need to run a ROM at least once AND be connected to the internet.
+    This creates the directory structure & installs the associated Windows libraries for Wine.
+
+    Note: It may take some time before the game starts with the first use, this is NORMAL!
+    *** Please be patient as it can take up to 2 minutes depending on your internet connection speed ***
+
+    -----------
+    Controllers
+    -----------
+
+    Currently controllers cannot be configured using the desktop app.
+    This is a limitation of the Demul app under Wine but also a known buggy pad plugin, even under Windows.
+    Currently we only map Player 1 using the emulators default keyboard configuration using evmapy.
+
+    ------------
+    Service Menu
+    ------------
+
+    Note: Keyboard required.
+    You can access the Service Menu using F4 and then use F2 to navigate with F4 to select.
+
+    Enjoy Sega Cave CV1000 games under Linux!
+
+pdp1:
+  name:       PDP-1
+  manufacturer: Digital Equipment Corporation
+  release: 1961
+  hardware: computer
+  extensions: [zip, 7z, tap, rim, drm]
+  emulators:
+    libretro:
+      mess:     { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
+    mame:
+      mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
+  comment_en: |
+    Use Control-Enter or Start to start after loading. Loading may take some time,
+    if the green lights are blinking, it is loading.
+
+    Spacewar is two player only, if you only have one controller connected, it will control both ships.

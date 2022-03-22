@@ -1,25 +1,24 @@
 diff --git a/pcsx2/SaveState.cpp b/pcsx2/SaveState.cpp
-index 8e54f7b..e38d270 100644
+index 540e0fe..b6a69ab 100644
 --- a/pcsx2/SaveState.cpp
 +++ b/pcsx2/SaveState.cpp
-@@ -79,11 +79,8 @@ wxString SaveStateBase::GetFilename( int slot )
- 	wxString serialName( DiscSerial );
- 	if (serialName.IsEmpty()) serialName = L"BIOS";
+@@ -112,17 +112,8 @@ wxString SaveStateBase::GetSavestateFolder( int slot, bool isSavingOrLoading )
+ 		CRCvalue = L"None";
+ 	}
  
--	return (EmuFolders::Savestates +
--		pxsFmt( L"%s (%08X).%02d.p2s", WX_STR(serialName), ElfCRC, slot )).GetFullPath();
+-	wxFileName dirname = wxFileName::DirName(g_Conf->FullpathToSaveState(serialName, CRCvalue));
 -
--	//return (g_Conf->Folders.Savestates +
--	//	pxsFmt( L"%08X.%03d", ElfCRC, slot )).GetFullPath();
+-	if (isSavingOrLoading)
+-	{
+-		if (!wxDirExists(g_Conf->FullpathToSaveState(serialName, CRCvalue)))
+-		{
+-			wxMkdir(g_Conf->FullpathToSaveState(serialName, CRCvalue));
+-		}
+-	}
+-	return (dirname.GetPath() + "/" +
+-			pxsFmt( L"%s (%s).%02d.p2s", WX_STR(serialName), WX_STR(CRCvalue), slot ));
 +	return (g_Conf->Folders.Savestates +
 +		pxsFmt( L"%08X.%03d", ElfCRC, slot )).GetFullPath();
  }
  
  SaveStateBase::SaveStateBase( SafeArray<u8>& memblock )
-@@ -923,4 +920,4 @@ void SaveState_UnzipFromDisk(const wxString& filename)
- 	reader->Read(buffer.GetPtr(), foundInternal->GetSize());
- 
- 	memLoadingState(buffer).FreezeBios().FreezeInternals();
--}
-\ No newline at end of file
-+}

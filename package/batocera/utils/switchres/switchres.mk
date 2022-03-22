@@ -3,8 +3,8 @@
 # SwitchRes
 #
 ################################################################################
-# Version: Commits from Jun 28th, 2021
-SWITCHRES_VERSION = a8af8e8f7f54d24414b4a8595a84c0f0f23e14a1
+# Version: Commits from Jan 11th, 2022
+SWITCHRES_VERSION = f3144602949ccb93ac2705aa9a89c18bd26fe8cc
 SWITCHRES_SITE = $(call github,antonioginer,switchres,$(SWITCHRES_VERSION))
 
 SWITCHRES_DEPENDENCIES = libdrm xserver_xorg-server
@@ -13,6 +13,7 @@ SWITCHRES_INSTALL_STAGING = YES
 define SWITCHRES_BUILD_CMDS
 	# Cross-compile standalone and libswitchres
 	cd $(@D) && \
+        PATH="$(HOST_DIR)/bin:$$PATH" \
 	CC="$(TARGET_CC)" \
 	CXX="$(TARGET_CXX)" \
 	PREFIX="$(STAGING_DIR)/usr" \
@@ -23,6 +24,7 @@ endef
 
 define SWITCHRES_INSTALL_STAGING_CMDS
 	cd $(@D) && \
+        PATH="$(HOST_DIR)/bin:$$PATH" \
 	CC="$(TARGET_CC)" \
 	CXX="$(TARGET_CXX)" \
 	BASE_DIR="" \

@@ -17,6 +17,7 @@ from generators.mupen.mupenGenerator import MupenGenerator
 from generators.ppsspp.ppssppGenerator import PPSSPPGenerator
 from generators.flycast.flycastGenerator import FlycastGenerator
 from generators.dolphin.dolphinGenerator import DolphinGenerator
+from generators.dolphin_triforce.dolphinTriforceGenerator import DolphinTriforceGenerator
 from generators.pcsx2.pcsx2Generator import Pcsx2Generator
 from generators.scummvm.scummvmGenerator import ScummVMGenerator
 from generators.dosbox.dosboxGenerator import DosBoxGenerator
@@ -61,10 +62,13 @@ from generators.sonicretro.sonicretroGenerator import SonicRetroGenerator
 from generators.gsplus.gsplusGenerator import GSplusGenerator
 from generators.fba2x.fba2xGenerator import Fba2xGenerator
 from generators.yuzu.yuzuGenerator import YuzuGenerator
+from generators.ryujinx.ryujinxGenerator import RyujinxGenerator
 from generators.samcoupe.samcoupeGenerator import SamcoupeGenerator
 from generators.abuse.abuseGenerator import AbuseGenerator
 from generators.cdogs.cdogsGenerator import CdogsGenerator
 from generators.hcl.hclGenerator import HclGenerator
+from generators.openmsx.openmsxGenerator import OpenmsxGenerator
+from generators.demul.demulGenerator import DemulGenerator
 #from generators.play.playGenerator import PlayGenerator
 
 import controllersConfig as controllers
@@ -93,6 +97,7 @@ generators = {
     'amiberry': AmiberryGenerator(),
     'flycast': FlycastGenerator(),
     'dolphin': DolphinGenerator(),
+    'dolphin_triforce': DolphinTriforceGenerator(),
     'pcsx2': Pcsx2Generator(),
     'ppsspp': PPSSPPGenerator(),
     'citra' : CitraGenerator(),
@@ -132,10 +137,13 @@ generators = {
     'gsplus': GSplusGenerator(),
     'fba2x': Fba2xGenerator(),
     'yuzu': YuzuGenerator(),
+    'ryujinx': RyujinxGenerator(),
     'samcoupe': SamcoupeGenerator(),
     'abuse': AbuseGenerator(),
     'cdogs': CdogsGenerator(),
     'hcl': HclGenerator(),
+    'openmsx': OpenmsxGenerator(),
+    'demul': DemulGenerator(),
     #'play': PlayGenerator(),
 }
 
@@ -333,14 +341,15 @@ def start_rom(args, maxnbplayers, rom, romConfiguration):
 
             if system.isOptSet('hud_support') and system.getOptBoolean('hud_support') == True:
                 hud_bezel = getHudBezel(system, rom, gameResolution)
-                if (system.isOptSet('hud') and system.config["hud"] != "") or hud_bezel is not None:
+                if (system.isOptSet('hud') and system.config["hud"] != "" and system.config["hud"] != "none") or hud_bezel is not None:
                     gameinfos = extractGameInfosFromXml(args.gameinfoxml)
                     cmd.env["MANGOHUD_DLSYM"] = "1"
                     hudconfig = getHudConfig(system, args.systemname, system.config['emulator'], effectiveCore, rom, gameinfos, hud_bezel)
                     with open('/var/run/hud.config', 'w') as f:
                         f.write(hudconfig)
                     cmd.env["MANGOHUD_CONFIGFILE"] = "/var/run/hud.config"
-                    cmd.array.insert(0, "mangohud")
+                    if generators[system.config['emulator']].hasInternalMangoHUDCall() == False:
+                        cmd.array.insert(0, "mangohud")
 
             exitCode = runCommand(cmd)
         finally:
@@ -368,7 +377,7 @@ def start_rom(args, maxnbplayers, rom, romConfiguration):
     return exitCode
 
 def getHudBezel(system, rom, gameResolution):
-    if 'bezel' not in system.config or system.config['bezel'] == "":
+    if 'bezel' not in system.config or system.config['bezel'] == "" or system.config['bezel'] == "none":
         return None
 
     eslog.debug("hud enabled. trying to apply the bezel {}".format(system.config['bezel']))
@@ -429,7 +438,7 @@ def getHudBezel(system, rom, gameResolution):
     # if there is no information about top/bottom, assume default is 0
 
     ## the bezel left and right cover must be maximum
-    ingame_ratio = generators[system.config['emulator']].getInGameRatio(system.config, gameResolution)
+    ingame_ratio = generators[system.config['emulator']].getInGameRatio(system.config, gameResolution, rom)
     img_height = bezel_height
     img_width  = img_height * ingame_ratio
 
@@ -512,7 +521,7 @@ def hudConfig_protectStr(str):
 def getHudConfig(system, systemName, emulator, core, rom, gameinfos, bezel):
     configstr = ""
 
-    if bezel != "":
+    if bezel != "" and bezel is not None:
         configstr = "background_image={}\nlegacy_layout=false\n".format(hudConfig_protectStr(bezel))
 
     if not system.isOptSet('hud'):
@@ -608,7 +617,7 @@ if __name__ == '__main__':
     parser.add_argument("-state_slot", help="state slot", type=str, required=False)
     parser.add_argument("-autosave", help="autosave", type=str, required=False)
     parser.add_argument("-systemname", help="system fancy name", type=str, required=False)
-    parser.add_argument("-gameinfoxml", help="game info xml", type=str, required=False)
+    parser.add_argument("-gameinfoxml", help="game info xml", type=str, nargs='?', default='/dev/null', required=False)
 
     args = parser.parse_args()
     try:

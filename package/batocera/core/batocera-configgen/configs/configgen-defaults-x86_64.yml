@@ -3,7 +3,7 @@ default:
   core:
   options:
     hud_support: true
-    retroarch.video_frame_delay_auto: true
+    video_frame_delay_auto: true
 
 pcengine:
   emulator: libretro
@@ -32,16 +32,26 @@ cdi:
 advision:
   emulator: mame
   core:     mame
+#triforce:
+#  emulator: dolphin-triforce
+#  core:     dolphin-triforce
 gamecube:
   options:
     ubershaders: asynchronous_ubershader
+    # causes issues on nvidia+dolphin
+    bezel: none
 wii:
   options:
     ubershaders: asynchronous_ubershader
-tvgames:
+    # causes issues on nvidia+dolphin
+    bezel: none
+plugnplay:
   emulator: mame
   core:     mame
 megaduck:
+  emulator: mame
+  core:     mame
+pdp1:
   emulator: mame
   core:     mame
 pv1000:
@@ -89,3 +99,39 @@ tutor:
 coco:
   emulator: mame
   core:     mame
+macintosh:
+  emulator: mame
+  core:     mame
+archimedes:
+  emulator: mame
+  core:     mame
+socrates:
+  emulator: mame
+  core:     mame
+supracan:
+  emulator: mame
+  core:     mame
+vsmile:
+  emulator: mame
+  core:     mame
+xegs:
+  emulator: mame
+  core:     mame
+atom:
+  emulator: mame
+  core:     mame
+electron:
+  emulator: mame
+  core:     mame
+camplynx:
+  emulator: mame
+  core:     mame
+vgmplay:
+  emulator: mame
+  core:     mame
+gaelco:
+  options:
+    videomode: max-640x480
+hikaru:
+  options:
+    videomode: max-640x480

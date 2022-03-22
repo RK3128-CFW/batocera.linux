@@ -5,7 +5,11 @@
 ################################################################################
 # Version: Jun 11, 2021
 MALI_G31_GBM_VERSION = ad4c28932c3d07c75fc41dd4a3333f9013a25e7f
-MALI_G31_GBM_SITE = $(call github,rockchip-linux,libmali,$(MALI_G31_GBM_VERSION))
+
+MALI_G31_GBM_SOURCE = libmali-$(MALI_G31_GBM_VERSION).tar.gz
+MALI_G31_GBM_SITE = https://github.com/batocera-linux/rockchip-packages/releases/download/20220303
+#MALI_G31_GBM_SITE = $(call github,rockchip-linux,libmali,$(MALI_G31_GBM_VERSION))
+
 MALI_G31_GBM_INSTALL_STAGING = YES
 MALI_G31_GBM_PROVIDES = libegl libgles libmali
 
@@ -18,7 +22,7 @@ ifneq ($(BR2_PACKAGE_MESA3D),y)
 MALI_G31_GBM_CONF_OPTS += -Dkhr-header=true
 endif
 
-ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_RK3326_ANY),y)
+ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_RK3326),y)
 # See https://wiki.odroid.com/odroid_go_advance/application_note/vulkan_on_rk3326
 MALI_G31_GBM_EXTRA_DOWNLOADS=https://dn.odroid.com/RK3326/ODROID-GO-Advance/rk3326_r13p0_gbm_with_vulkan_and_cl.zip
 

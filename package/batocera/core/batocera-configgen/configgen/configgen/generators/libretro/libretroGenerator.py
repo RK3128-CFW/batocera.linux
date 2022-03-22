@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import sys
 import Command
 import batoceraFiles
 from . import libretroConfig
@@ -8,8 +9,10 @@ import shutil
 from generators.Generator import Generator
 import os
 import stat
+import subprocess
 from settings.unixSettings import UnixSettings
 from utils.logger import get_logger
+import utils.videoMode as videoMode
 
 eslog = get_logger(__name__)
 
@@ -30,7 +33,15 @@ class LibretroGenerator(Generator):
                 libretroRetroarchCustom.generateRetroarchCustom()
             #  Write controllers configuration files
             retroconfig = UnixSettings(batoceraFiles.retroarchCustom, separator=' ')
-            libretroControllers.writeControllersConfig(retroconfig, system, playersControllers)
+            if system.isOptSet('lightgun_map'):
+                lightgun = system.getOptBoolean('lightgun_map')
+            else:
+                # Lightgun button mapping breaks lr-mame's inputs, disable if left on auto
+                if system.config['core'] in [ 'mame', 'mess', 'mamevirtual' ]:
+                    lightgun = False
+                else:
+                    lightgun = True
+            libretroControllers.writeControllersConfig(retroconfig, system, playersControllers, lightgun)
             # force pathes
             libretroRetroarchCustom.generateRetroarchCustomPathes(retroconfig)
             # Write configuration to retroarchcustom.cfg
@@ -42,7 +53,10 @@ class LibretroGenerator(Generator):
             if system.isOptSet('forceNoBezel') and system.getOptBoolean('forceNoBezel'):
                 bezel = None
 
-            libretroConfig.writeLibretroConfig(retroconfig, system, playersControllers, rom, bezel, gameResolution)
+            # Get the graphics backend prior to writing the config
+            gfxBackend = getGFXBackend(system)
+
+            libretroConfig.writeLibretroConfig(retroconfig, system, playersControllers, rom, bezel, gameResolution, gfxBackend)
             retroconfig.write()
 
         # Retroarch core on the filesystem
@@ -189,12 +203,21 @@ class LibretroGenerator(Generator):
 
         # RetroArch 1.7.8 (Batocera 5.24) now requires the shaders to be passed as command line argument
         renderConfig = system.renderconfig
-        if 'shader' in renderConfig and renderConfig['shader'] != None:
-            if ( (system.isOptSet("gfxbackend") and system.config["gfxbackend"] == "vulkan")
-                    or (system.config['core'] in libretroConfig.coreForceSlangShaders) ):
-                shaderFilename = renderConfig['shader'] + ".slangp"
+        gameSpecial = videoMode.getGameSpecial(system.name, rom)
+        gameShader = None
+        if gameSpecial == "0":
+            if 'shader' in renderConfig:
+                gameShader = renderConfig['shader']
+        else:
+            if ('shader-' + str(gameSpecial)) in renderConfig:
+                gameShader = renderConfig['shader-' + str(gameSpecial)]
             else:
-                shaderFilename = renderConfig['shader'] + ".glslp"
+                gameShader = renderConfig['shader']
+        if 'shader' in renderConfig and gameShader != None:
+            if (gfxBackend == 'glcore' or gfxBackend == 'vulkan') or (system.config['core'] in libretroConfig.coreForceSlangShaders):
+                shaderFilename = gameShader + ".slangp"
+            else:
+                shaderFilename = gameShader + ".glslp"
             eslog.debug("searching shader {}".format(shaderFilename))
             if os.path.exists("/userdata/shaders/" + shaderFilename):
                 video_shader_dir = "/userdata/shaders"
@@ -227,14 +250,43 @@ class LibretroGenerator(Generator):
             romName = os.path.splitext(os.path.basename(rom))[0]
             rom = batoceraFiles.daphneDatadir + '/roms/' + romName +'.zip'
 
-        # The libretro core for EasyRPG requires to launch the RPG_RT.ldb file inside the .easyrpg folder
-        if system.name == 'easyrpg' and system.config['core'] == "easyrpg":
-            rom = rom + '/RPG_RT.ldb'
-        
         if system.name == 'scummvm':
             rom = os.path.dirname(rom) + '/' + romName[0:-8]
         
+        # Use command line instead of ROM file for MAME variants
+        if system.config['core'] in [ 'mame', 'mess', 'mamevirtual' ]:
+            dontAppendROM = True
+            commandArray.append("/var/run/lr-mame.cmd")
+
         if dontAppendROM == False:
             commandArray.append(rom)
             
         return Command.Command(array=commandArray)
+
+def getGFXBackend(system):
+        # Start with the selected option
+        # Pick glcore or gl based on drivers if not selected
+        if system.isOptSet("gfxbackend"):
+            backend = system.config["gfxbackend"]
+            setManually = True
+        else:
+            setManually = False
+            if videoMode.getGLVersion() >= 3.1 and videoMode.getGLVendor() in ["nvidia", "amd"]:
+                backend = "glcore"
+            else:
+                backend = "gl"
+
+        # Retroarch has flipped between using opengl or gl, correct the setting here if needed.
+        if backend == "opengl":
+            backend = "gl"
+
+        # Don't change based on core if manually selected.
+        if not setManually:
+            # If set to glcore or gl, override setting for certain cores that require one or the other
+            core = system.config['core']
+            if backend == "gl" and core in [ 'kronos', 'citra', 'mupen64plus-next', 'melonds', 'beetle-psx-hw' ]:
+                backend = "glcore"
+            if backend == "glcore" and core in [ 'parallel_n64', 'yabasanshiro', 'openlara', 'boom3' ]:
+                backend = "gl"
+
+        return backend

@@ -33,7 +33,7 @@ class DaphneGenerator(Generator):
                             "-fastboot", "-datadir", batoceraFiles.daphneDatadir, "-homedir", batoceraFiles.daphneHomedir]
 
         # Aspect ratio
-        if system.config["ratio"] == "4/3":
+        if not (system.isOptSet('daphne_ratio') and system.config['daphne_ratio'] == "stretch"):
             commandArray.append("-force_aspect_ratio")
 
         # Invert required when screen is rotated
@@ -42,6 +42,11 @@ class DaphneGenerator(Generator):
         else:
             commandArray.extend(["-x", str(gameResolution["width"]), "-y", str(gameResolution["height"])])
 
+        # Backend - Default OpenGL
+        if system.isOptSet("gfxbackend") and system.config["gfxbackend"] == 'Vulkan':
+            commandArray.append("-vulkan")
+        else:
+            commandArray.append("-opengl")
 
         # Disable Bilinear Filtering
         if system.isOptSet('bilinear_filter') and system.getOptBoolean("bilinear_filter"):
@@ -65,3 +70,13 @@ class DaphneGenerator(Generator):
 
         return Command.Command(array=commandArray)
 
+    def getInGameRatio(self, config, gameResolution, rom):
+        romName = os.path.splitext(os.path.basename(rom))[0]        
+        singeFile = rom + "/" + romName + ".singe"
+        if "daphne_ratio" in config:
+            if config['daphne_ratio'] == "stretch":
+                return 16/9
+        if os.path.isfile(singeFile):
+            return 16/9
+        else:
+            return 4/3

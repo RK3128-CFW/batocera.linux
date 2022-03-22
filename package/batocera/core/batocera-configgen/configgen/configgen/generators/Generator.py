@@ -17,9 +17,14 @@ class Generator(object):
     def executionDirectory(self, config, rom):
         return None
 
+    # mame or libretro have internal bezels, don't display the one of mangohud
     def supportsInternalBezels(self):
         return False
 
-    def getInGameRatio(self, config, gameResolution):
+    # mangohud must be called by the generator itself (wine based emulator for example)
+    def hasInternalMangoHUDCall(self):
+        return False
+
+    def getInGameRatio(self, config, gameResolution, rom):
         # put a default value, but it should be overriden by generators
         return 4/3

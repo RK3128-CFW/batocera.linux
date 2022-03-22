@@ -1,13 +1,77 @@
-202x/xx/xx - batocera.linux 33
+
+2022/xx/xx - batocera.linux 34
+        * add: board anbernic rg552
+        * add: demul emulator for running Sega - Naomi 2, Hikaru, Gaelco & Cave CV1000 games - requires Wine - (x86_64)
+        * add: add more flycast options including vulkan support
+        * add: dolphin-triforce
+        * add: libretro: mesen
+        * add: additional MAME/MESS systems: Acorn Atom, Acorn Archimedes, Acorn Electron, Atari XE Game System, Camputers Lynx, Funtech Super A'Can, VTech Socrates, VTech V.Smile, VGM Player (x86_64)
+        * add: support for software lists in all MESS systems (x86_64)
+        * add: MAME: additional CRT presets by ICEknigh7 (https://www.reddit.com/r/emulation/comments/sdtlsa/comment/hufkch4/) (x86_64)
+        * add: MAME artwork crop option (maximizes the gameplay screen, crops art to fit only empty space) (x86_64)
+        * add: libretro-mess & libretro-mamevirtual
+        * add: game options by folder (manual edits to batocera.conf only)
+        * add: btop for system monitoring
+        * add: adafruit-circuitpython-ws2801 for rpi builds
+        * add: bezels and hud for sbc
+        * add: openbor7142
+        * add: sega model 3 emulator (Supermodel) to the RPi4
+        * add: usb_modeswitch
+        * bump: rk3399 linux kernel 5.10
+        * bump: dolphin to 5.0-15993
+        * bump: flycast & libretro-flycast to 1.2
+        * bump: duckstation for final build?
+        * bump: Sonic Retro Egine ports to latest builds
+        * bump: x86_64 kernel to 5.17
+        * bump: linux device firmware to march 2022
+        * bump: mesa to v22
+        * bump: retroarch to 1.10
+        * bump: RPi kernel & associate firmware to 5.15.30
+        * bump: vulkan support to 1.3.206
+        * bump: flatpak to 1.12.6
+        * bump: libretro snes cores
+        * bump: nvidia to v510.54
+        * bump: switchres
+		* bump: parallel64 to 25 Dec build - update optimisations
+        * bump: xemu to v 0.6.2-80
+        * change: added most MAME configuration options to libretro-mame
+        * change: Restored Sonic Retro Engine to non-x86 boards (using 1.1.2.1 for sonic2013 & 1.1.2 for soniccd)
+        * change: MAME/MESS: speech module and 32k RAM option for TI-99, image reader enabled for Mac IIx model (x86_64)
+        * change: MAME: High score plugin enabled by default (can be disabled in game/system options) (x86_64)
+        * change: enabled MAME as an alternate emulator for Vectrex (x86_64)
+        * change: added D-pad to MAME menu navigation (x86_64)
+        * change: decoration sets can now include MAME-compatible ZIP files with full layouts and multiple images
+		* change: RPi4 now runs under xorg window server
+		* change: RPi4 now allows F1 menu access (xorg)
+		* change: moonlight configuration options added
+		* fix: mediatek 7921 cards
+		* fix: parallel64 not starting
+		* fix: lr-flycast with opengles
+		* fix: syncthing upgrade
+		* fix: relatek firmware symbolic links
+		* fix: radeon avc1 decoding
+		* fix: citra running slow
+		* fix: duckstation pop-up
+		* fix: duckstation language
+		* fix: fix yabasanshiro not starting
+		* fix: cemu controller config
+    * fix: flycast not creating save directory on new install
+    * fix: moonlight custom config getting overwritten
+
+2022/02/xx - batocera.linux 33
         * add: Support for Beelink GT-KING "https://www.bee-link.com/products/beelink-gt-king-wifi6"
         * add: Support for Beelink GT-KING-PRO "https://www.bee-link.com/products/beelink-gt-king"
         * add: Support for Raxda Zero "https://wiki.radxa.com/Zero"
         * add: Support for Orange Pi Zero 2 "http://www.orangepi.org/Orange%20Pi%20Zero2/"
         * add: Support for Piboy DMG "https://www.experimentalpi.com/PiBoy-DMG--Kit_p_18.html"
-        * new language : hebrew
+        * add: Support for Pixelcade Arcade Marquee display "http://pixelcade.org/"
+        * add: bezels (decorations) for all (or almost all) emulators -- x86_64 only for the moment
+        * add: brand new bezels for most systems, by Duimon -- additional sets from Duimon in the content downloader
+        * add: in game head up display (performances: such as fps, gpu and cpu temperature, gpu information, or game: box, game name) -- x86_64 only for the moment
+        * add: language: Hebrew
         * add: .gbc2 is now an additional acceptable extension for both GB2Player and GBC2Player dual-rom playlists
         * add: FSR & DLSS support for Wine (x86_64)
-        * add: Adventure Vision, CD-i, CreatiVision, PV-1000, Game.com, Gamate, TV Games (P&P Consoles), Fujitsu FM-7, Game Pocket Computer, APF M-1000, BBC Micro, Coleco ADAM, Arcadia 2001, Game Master, Bally Astrocade, TI-99, Tomy Tutor, Tandy Color Computer, & Mega Duck via MAME (x86_64)
+        * add: Adventure Vision, CD-i, Macintosh, CreatiVision, PV-1000, Game.com, Gamate, Plug and Play TV Games, Fujitsu FM-7, Game Pocket Computer, APF M-1000, BBC Micro, Coleco ADAM, Arcadia 2001, Game Master, Bally Astrocade, TI-99, Tomy Tutor, Tandy Color Computer, & Mega Duck via MAME (x86_64)
         * add: LCD Games system (MAME & lr-gw on x86_64, lr-gw on all others)
         * add: Media Type option for MAME systems with multiple ROM types (floppy, CD, cassette, etc.) (x86_64)
         * add: Toggle for UI mode in MAME via Hotkey + D-Pad Up or Scroll Lock, plus per-system/game setting for MAME computer systems (x86_64)
@@ -20,10 +84,21 @@
         * add: Gong, a libretro engine for Pong
         * add: enabled libretro-ppsspp for RPi3/4
         * add: libretro-ppsspp enabled on oga/ogs/gameforce
+        * add: x86_64: enable Parallel-RDP in Mupen64plus-Next
         * add: .m3u support for pico8 multicarts
-        * add: syncthing and rclone
+        * add: syncthing & rclone & ryzenadj
         * add: batocera-bluetooth can now blacklist devices
-		* add: pyserial for x86 builds to support devices with gpio - i.e. latte panda.
+        * add: pyserial for x86 builds to support devices with gpio - i.e. latte panda.
+        * add: wifi country code option (2-letter code like wifi.country=US in batocera.conf)
+        * add: Mega Bezel shaders by HyperspaceMadness
+        * add: libretro-vice x64sc, xplus4 (for Commodore Plus4), x128 (Commodore 128), xvic (VIC-20), xpet (PET)
+        * add: batocera-resolution can now adjust refresh rate on xorg (PC x86_64)
+        * add: variable refresh rate for libretro, turn on with global.retroarch.vrr_runloop_enable = 1
+        * add: miniVMac emulator for 68k-based Macintosh computers
+        * add: ethtool v5.10 (package taken from Buildroot)
+        * add: Wake On LAN (WoL) enabled by default via udev rule
+        * add: smartmontools for monitoring drive health
+        * add: OpenMSX (x86_64)
         * fix: borders are now shown on Vice C64, also fixed default aspect ratio
         * fix: duckstation quick menu can now actually be accessed with hotkey+south
         * fix: RetroArch FSUAE options now functional in amiga500, amiga1200, atarist and sharpx68000.
@@ -36,49 +111,69 @@
         * fix: pcsx2 no longer has a white border for 4:3 games
         * fix: sega model 2 crashing & controller issues - moved to proton.
         * change: RPi3 default audio buffer to 96ms, gb/gbc to 196ms
+        * change: RPi3/4 default PSX emulator back to libretro: PSXReARMed
         * change: MAME no-nag patch (x86_64)
         * change: Option for MAME controllers that use buttons as D-Pad directions (DS3, X360 dongle) (x86_64)
+        * change: Option for MAME special game controls (auto-set by ROM by default, manually selectable per game or system) (x86_64)
+        * change: Option for MAME custom configuration file for arcade cabinets etc. (x86_64)
         * change: Game & Watch will group with LCD Games if enabled, and MAME is enabled for x86_64
         * change: The "amlogic/s905gen3/tvbox" image is now titled "amlogic/s905gen3/tvbox-gen3"
         * change: batocera-screenshot now save as PNG instead of JPG (x86_64)
         * change: Kodi re-enabled on RPi2
+        * change: libretro cores now use core-provided aspect ratio by default when decorations are disabled
         * change: enabled lr-picodrive for gamegear on the rpi1 build
+        * change: libretro cores now use sharp-bilinear-simple shader set instead of regular bilinear filtering
         * change: Devilutionx and Steam games can be closed with hotkey+start
         * change: -fastboot is no longer a default parameter for Singe games
-        * change: updated splash screen
+        * change: updated splash screen (credit Lichshield)
+        * change: New default C64 game for initial install (Fix it Felix Jr. 64)
+        * change: Retroarch will default to glcore instread of gl if OpenGL 3.1 or higher is available
         * es: English spelling/grammar overhaul, multiple option names updated
         * es: added Xemu widescreen and render scale in advanced options
         * es: added Dolphin Ubershaders and SSAA in advanced options
+        * es: added TV mode for wii in advanced options
         * es: added RPCS3 SPU decoder selection in advanced options
-        * es: added libretro video_frame_delay_auto to latency settings
+        * es: added multiple RPCS3 option in advanced settings
+        * es: added libretro video_frame_delay_auto and variable refresh rate to latency settings
+        * es: added multiple PPSSPP options to advanced settings
         * es: option to launch a game automatically at boot
         * es: option to show/hide border for Vice C64
         * es: enabled retroachievements for libretro ppsspp, freeintv, o2em, pcfx, sgb, satellaview and libretro/melonds
         * es: snes-msu1 added to the snes group
-        * bump: RetroArch 1.9.13.2 + updated libretro cores
-        * es: new scraper : hfs
+        * es: new scraper: hfs "https://db.hfsplay.fr/"
+        * es: option to disable auto-incrementing savestate slots
+        * es: advanced system options can now be translated
+        * bump: RetroArch 1.9.14 + updated libretro cores
+        * bump: libretro-mame (0.238)
+        * bump: mame (0.239)
         * bump: kernel to 5.15 (x86_64)
         * bump: gcc to 11
         * bump: llvm to 13
-        * bump: vulkan to 1.2.196
+        * bump: vulkan to 1.2.200
         * bump: br to 2021.08
-        * bump: Flatpak to 1.12.2
+        * bump: Flatpak to 1.12.3
         * bump: Ruffle
         * bump: lightspark
         * bump: Lutris to 6.14-4
-        * bump: DXVK to 1.9.2
-        * bump: Cemu to 1.25.6
-        * bump: RPCS3 to 0.0.18
+        * bump: DXVK to 1.9.3
+        * bump: Cemu to 1.26.0
+        * bump: RPCS3 to 0.0.20
         * bump: Xemu
         * bump: flycast to v1.1
         * bump: duckstation
         * bump: ppsspp (and libretro-ppsspp) to v1.12.3
         * bump: Sonic Retro (sonic2013 & soniccd)
-        * bump: Daphne to v2.6.18
-        * bump: Sega Model 3 emulator to v865
+        * bump: Daphne to v2.8.0
+        * bump: Vice to v3.6
+        * bump: ScummVM to v2.5.1
+        * bump: Sega Model 3 emulator to v876
+        * bump: easyrpg to 0.7.0 (standalone + libretro core, support .zip now)
         * bump: MelonDS - requires updated bios & firmware files
+        * bump: NVidia driver for x86_64 (495.46)
+        * bump: PCSX2 for Vulkan support
         * dev: odroidgoa renamed to rk3326 (Support for Anbernic RG351P, Odroid Go Advance, Odroid Go Super, Powkiddy RGB10 and RK2020)
         * dev: dts added to rpi4 (bcm2711-rpi-400 and bcm2711-rpi-cm4)
+        * dev: RPI's bump kernel to v5.15.x
 
 2021/09/30 - batocera.linux 32
         * warning: rpi3 is now running in 64-bit mode.

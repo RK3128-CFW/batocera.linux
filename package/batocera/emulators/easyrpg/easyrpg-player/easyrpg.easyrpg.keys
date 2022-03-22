@@ -1,5 +1,25 @@
 {
     "actions_player1": [
+        {
+            "trigger": "up",
+            "type": "key",
+            "target": "KEY_UP"
+        },
+        {
+            "trigger": "down",
+            "type": "key",
+            "target": "KEY_DOWN"
+        },
+        {
+            "trigger": "left",
+            "type": "key",
+            "target": "KEY_LEFT"
+        },
+        {
+            "trigger": "right",
+            "type": "key",
+            "target": "KEY_RIGHT"
+        },
 	{
             "trigger": ["hotkey", "start"],
             "type": "key",
@@ -23,7 +43,7 @@
 	{
             "trigger": ["hotkey", "pageup"],
             "type": "key",
-            "target": [ "KEY_F10" ]
+            "target": [ "KEY_F7" ]
 	},
 	{
             "trigger": ["hotkey", "right"],

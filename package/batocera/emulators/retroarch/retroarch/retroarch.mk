@@ -3,16 +3,21 @@
 # retroarch
 #
 ################################################################################
-# Version.: Release on Nov 12, 2021
-RETROARCH_VERSION = v1.9.13.2
+# Version: Release on Mar 5, 2022
+RETROARCH_VERSION = v1.10.1
 RETROARCH_SITE = $(call github,libretro,RetroArch,$(RETROARCH_VERSION))
 RETROARCH_LICENSE = GPLv3+
 RETROARCH_DEPENDENCIES = host-pkgconf dejavu retroarch-assets flac
 # install in staging for debugging (gdb)
 RETROARCH_INSTALL_STAGING = YES
 
-RETROARCH_CONF_OPTS = --disable-oss --enable-zlib --disable-qt --enable-threads --enable-ozone --enable-xmb --disable-discord
-RETROARCH_CONF_OPTS += --enable-flac --enable-lua --enable-networking --enable-translate --enable-rgui --disable-cdrom
+RETROARCH_CONF_OPTS = --disable-oss --enable-zlib --disable-qt --enable-threads --enable-ozone \
+    --enable-xmb --disable-discord --enable-flac --enable-lua --enable-networking \
+	--enable-translate --enable-rgui --disable-cdrom
+
+ifeq ($(BR2_ENABLE_DEBUG),y)
+    RETROARCH_CONF_OPTS += --enable-debug
+endif
 
 ifeq ($(BR2_PACKAGE_FFMPEG),y)
 	RETROARCH_CONF_OPTS += --enable-ffmpeg
@@ -69,11 +74,14 @@ else
 	RETROARCH_CONF_OPTS += --disable-pulse
 endif
 
-ifeq ($(BR2_PACKAGE_HAS_LIBGLES),y)
-	RETROARCH_CONF_OPTS += --enable-opengles
-	RETROARCH_DEPENDENCIES += libgles
-else
-	RETROARCH_CONF_OPTS += --disable-opengles
+ifeq ($(BR2_PACKAGE_BATOCERA_GLES3),y)
+    RETROARCH_CONF_OPTS += --enable-opengles3 --enable-opengles --enable-opengles3_1 --enable-opengles3_2
+    RETROARCH_DEPENDENCIES += libgles
+endif 
+
+ifeq ($(BR2_PACKAGE_BATOCERA_GLES2),y)
+    RETROARCH_CONF_OPTS += --enable-opengles
+    RETROARCH_DEPENDENCIES += libgles
 endif
 
 ifeq ($(BR2_PACKAGE_HAS_LIBEGL),y)
@@ -105,14 +113,16 @@ else
 	RETROARCH_CONF_OPTS += --disable-freetype
 endif
 
-ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_RK3326),y)
+ifeq ($(BR2_PACKAGE_ROCKCHIP_RGA),y)
 	RETROARCH_CONF_OPTS += --enable-odroidgo2
 	RETROARCH_DEPENDENCIES += rockchip-rga
 endif
 
 ifeq ($(BR2_PACKAGE_HAS_LIBGL),y)
-	RETROARCH_CONF_OPTS += --enable-opengl --disable-opengles
-	RETROARCH_DEPENDENCIES += libgl
+  ifneq ($(BR2_PACKAGE_BATOCERA_RPI4_WITH_XORG),y)
+    RETROARCH_CONF_OPTS += --enable-opengl --disable-opengles --disable-opengles3
+    RETROARCH_DEPENDENCIES += libgl
+  endif
 endif
 
 ifeq ($(BR2_PACKAGE_XSERVER_XORG_SERVER),)

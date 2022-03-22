@@ -1,11 +1,3 @@
 nds:
   emulator: drastic
   core:     drastic
-psp:
-  options:
-    frameskip: automatic
-psx:
-  emulator: libretro
-  core:     duckstation
-  options:
-    gpu_software: true

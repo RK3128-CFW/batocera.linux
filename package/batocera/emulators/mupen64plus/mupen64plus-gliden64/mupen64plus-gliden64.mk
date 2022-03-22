@@ -1,10 +1,10 @@
 ################################################################################
 #
-# mupen64plus video GLIDEN64
+# mupen64plus-gliden64-plugin
 #
 ################################################################################
-# Version.: Commits on Nov 13, 2021
-MUPEN64PLUS_GLIDEN64_VERSION = ad091be1cfa058259c98cf6d1f979b7b2471dc92
+# Version.: Commits on Feb 20, 2022
+MUPEN64PLUS_GLIDEN64_VERSION = 1a711257ed78131aff4d0e39933df14082f52f0c
 MUPEN64PLUS_GLIDEN64_SITE = $(call github,gonetz,GLideN64,$(MUPEN64PLUS_GLIDEN64_VERSION))
 MUPEN64PLUS_GLIDEN64_LICENSE = GPLv2
 MUPEN64PLUS_GLIDEN64_DEPENDENCIES = sdl2 alsa-lib mupen64plus-core
@@ -15,14 +15,14 @@ ifeq ($(BR2_PACKAGE_RPI_USERLAND),y)
 	MUPEN64PLUS_GLIDEN64_DEPENDENCIES += rpi-userland
 endif
 
-ifeq ($(BR2_arm)$(BR2_aarch64),y)
+ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_X86_ANY),y)
+	MUPEN64PLUS_GLIDEN64_CONF_OPTS += -DX86_OPT=ON
+endif
+
+ifeq ($(BR2_PACKAGE_HAS_LIBEGL),y)
 	MUPEN64PLUS_GLIDEN64_CONF_OPTS += -DEGL=ON
 	MUPEN64PLUS_GLIDEN64_CONF_OPTS += -DCMAKE_C_FLAGS="-DEGL_NO_X11"
 	MUPEN64PLUS_GLIDEN64_CONF_OPTS += -DCMAKE_CXX_FLAGS="-DEGL_NO_X11"
-endif
-
-ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_X86_ANY),y)
-	MUPEN64PLUS_GLIDEN64_CONF_OPTS += -DX86_OPT=ON
 endif
 
 ifeq ($(BR2_PACKAGE_MESA3D),y)

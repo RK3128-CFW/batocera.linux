@@ -16,6 +16,9 @@ import utils.bezels as bezelsUtil
 import subprocess
 from xml.dom import minidom
 from PIL import Image, ImageOps
+from . import mameControllers
+from pathlib import Path
+import csv
 
 eslog = get_logger(__name__)
 
@@ -25,37 +28,32 @@ class MameGenerator(Generator):
         return True
 
     def generate(self, system, rom, playersControllers, gameResolution):
-
         # Extract "<romfile.zip>"
         romBasename = path.basename(rom)
         romDirname  = path.dirname(rom)
+        softDir = "/var/run/mame_software/"
+        softList = ""
+        subdirSoftList = [ "mac_hdd", "bbc_hdd", "cdi", "archimedes_hdd" ]
 
         # Generate userdata folders if needed
-        if not os.path.exists("/userdata/system/configs/mame/"):
-            os.makedirs("/userdata/system/configs/mame/")
-        if not os.path.exists("/userdata/saves/mame/"):
-            os.makedirs("/userdata/saves/mame/")
-        if not os.path.exists("/userdata/saves/mame/nvram/"):
-            os.makedirs("/userdata/saves/mame/nvram")
-        if not os.path.exists("/userdata/saves/mame/cfg/"):
-            os.makedirs("/userdata/saves/mame/cfg/")
-        if not os.path.exists("/userdata/saves/mame/input/"):
-            os.makedirs("/userdata/saves/mame/input/")
-        if not os.path.exists("/userdata/saves/mame/state/"):
-            os.makedirs("/userdata/saves/mame/state/")
-        if not os.path.exists("/userdata/saves/mame/diff/"):
-            os.makedirs("/userdata/saves/mame/diff/")
-        if not os.path.exists("/userdata/saves/mame/comments/"):
-            os.makedirs("/userdata/saves/mame/comments/")
+        mamePaths = [ "system/configs/mame", "saves/mame", "saves/mame/nvram", "saves/mame/cfg", "saves/mame/input", "saves/mame/state", "saves/mame/diff", "saves/mame/comments", "bios/mame", "bios/mame/artwork", "cheats/mame", "saves/mame/plugins", "system/configs/mame/ctrlr", "system/configs/mame/ini", "bios/mame/artwork/crosshairs" ]
+        for checkPath in mamePaths:
+            if not os.path.exists("/userdata/" + checkPath + "/"):
+                os.makedirs("/userdata/" + checkPath + "/")
 
-        # Define systems that will use the MESS executable instead of MAME
-        messSystems = [ "lcdgames", "gameandwatch", "cdi", "advision", "tvgames", "megaduck", "crvision", "gamate", "pv1000", "gamecom" , "fm7", "xegs", "gamepock", "aarch", "atom", "apfm1000", "bbc", "camplynx", "adam", "arcadia", "supracan", "gmaster", "astrocde", "ti99", "tutor", "coco", "socrates" ]
-        # If it needs a system name defined, use it here. Add a blank string if it does not (ie non-arcade, non-system ROMs)
-        messSysName = [ "", "", "cdimono1", "advision", "", "megaduck", "crvision", "gamate", "pv1000", "gamecom", "fm7", "xegs", "gamepock", "aa310", "atom", "apfm1000", "bbcb", "lynx48k", "adam", "arcadia", "supracan", "gmaster", "astrocde", "ti99_4a", "tutor", "coco", "socrates" ]
-        # For systems with a MAME system name, the type of ROM that needs to be passed on the command line (cart, tape, cdrm, etc)
-        # If there are multiple ROM types (ie a computer w/disk & tape), select the default or primary type here.
-        messRomType = [ "", "", "cdrm", "cart", "", "cart", "cart", "cart", "cart", "cart1", "flop1", "cart", "cart", "flop", "cass", "cart", "flop1", "cass", "cass1", "cart", "cart", "cart", "cart", "cart", "cart", "cart", "cart" ]
-        messAutoRun = [ "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", 'mload""\\n', "", "", "", "", "", "", "", "", "" ]
+        messDataFile = '/usr/share/batocera/configgen/data/mame/messSystems.csv'
+        openFile = open(messDataFile, 'r')
+        messSystems = []
+        messSysName = []
+        messRomType = []
+        messAutoRun = []
+        with openFile:
+            messDataList = csv.reader(openFile, delimiter=';', quotechar="'")
+            for row in messDataList:
+                messSystems.append(row[0])
+                messSysName.append(row[1])
+                messRomType.append(row[2])
+                messAutoRun.append(row[3])
         
         # Identify the current system, select MAME or MESS as needed.
         try:
@@ -64,8 +62,18 @@ class MameGenerator(Generator):
             messMode = -1
         if messMode == -1:
             commandArray =  [ "/usr/bin/mame/mame" ]
+        elif system.name == "vgmplay":
+            commandArray =  [ "/usr/bin/mame/vgmplay" ]
+            if system.isOptSet("softList") and system.config["softList"] != "none":
+                softList = system.config["softList"]
+            else:
+                softList = ""
         else:
             commandArray =  [ "/usr/bin/mame/mess" ]
+            if system.isOptSet("softList") and system.config["softList"] != "none":
+                softList = system.config["softList"]
+            else:
+                softList = ""
         
         # MAME options used here are explained as it's not always straightforward
         # A lot more options can be configured, just run mame -showusage and have a look
@@ -73,28 +81,57 @@ class MameGenerator(Generator):
         if messMode == -1:
             commandArray += [ "-rompath",      romDirname ]
         else:
-            commandArray += [ "-rompath",      romDirname + ";/userdata/bios/;/userdata/roms/mame/" ]
+            if softList in subdirSoftList:
+                commandArray += [ "-rompath",      romDirname + ";/userdata/bios/;/userdata/roms/mame/;/var/run/mame_software/" ]
+            else:
+                commandArray += [ "-rompath",      romDirname + ";/userdata/bios/;/userdata/roms/mame/" ]
 
         # MAME various paths we can probably do better
         commandArray += [ "-bgfx_path",    "/usr/bin/mame/bgfx/" ]          # Core bgfx files can be left on ROM filesystem
         commandArray += [ "-fontpath",     "/usr/bin/mame/" ]               # Fonts can be left on ROM filesystem
         commandArray += [ "-languagepath", "/usr/bin/mame/language/" ]      # Translations can be left on ROM filesystem
-        commandArray += [ "-pluginspath", "/usr/bin/mame/plugins/" ]
-        commandArray += [ "-cheatpath",    "/userdata/cheats/mame/" ]       # Should this point to path or cheat.7z file ?
+        commandArray += [ "-pluginspath", "/usr/bin/mame/plugins/;/userdata/saves/mame/plugins" ]
         commandArray += [ "-samplepath",   "/userdata/bios/mame/samples/" ] # Current batocera storage location for MAME samples
-        commandArray += [ "-artpath",       "/userdata/decorations/;/var/run/mame_artwork/;/usr/bin/mame/artwork/;/userdata/bios/mame/artwork/" ] # first for systems ; second for overlays
+        commandArray += [ "-artpath",       "/var/run/mame_artwork/;/usr/bin/mame/artwork/;/userdata/bios/mame/artwork/;/userdata/decorations/" ] # first for systems ; second for overlays
+
+        # Enable cheats
+        commandArray += [ "-cheat" ]
+        commandArray += [ "-cheatpath",    "/userdata/cheats/mame/" ]       # Should this point to path containing the cheat.7z file
 
         # MAME saves a lot of stuff, we need to map this on /userdata/saves/mame/<subfolder> for each one
         commandArray += [ "-nvram_directory" ,    "/userdata/saves/mame/nvram/" ]
+
+        # Set custom config path if option is selected or default path if not
+        if system.isOptSet("customcfg"):
+            customCfg = system.getOptBoolean("customcfg")
+        else:
+            customCfg = False
+
+        if system.name == "mame":
+            if customCfg:
+                cfgPath = "/userdata/system/configs/mame/custom/"
+            else:
+                cfgPath = "/userdata/system/configs/mame/"
+            if not os.path.exists("/userdata/system/configs/mame/"):
+                os.makedirs("/userdata/system/configs/mame/")    
+        else:
+            if customCfg:
+                cfgPath = "/userdata/system/configs/mame/" + messSysName[messMode]+ "/custom/"
+            else:
+                cfgPath = "/userdata/system/configs/mame/" + messSysName[messMode] + "/"
+            if not os.path.exists("/userdata/system/configs/mame/" + messSysName[messMode] + "/"):
+                os.makedirs("/userdata/system/configs/mame/" + messSysName[messMode] + "/")    
+        if not os.path.exists(cfgPath):
+            os.makedirs(cfgPath)
+
         # MAME will create custom configs per game for MAME ROMs and MESS ROMs with no system attached (LCD games, TV games, etc.)
         # This will allow an alternate config path per game for MESS console/computer ROMs that may need additional config.
-        cfgPath = "/userdata/system/configs/mame/"
         if system.isOptSet("pergamecfg") and system.getOptBoolean("pergamecfg"):
             if not messMode == -1:
                 if not messSysName[messMode] == "":
                     if not os.path.exists("/userdata/system/configs/mame/" + messSysName[messMode] + "/"):
-                        os.makedirs("/userdata/system/configs/mame/" + messSysName[messMode] + "/")
-                    cfgPath = "/userdata/system/configs/mame/" + messSysName[messMode] + "/" + romBasename + "/"
+                        os.makedirs("/userdata/system/configs/mame/" + messSysName[messMode]+ "/")
+                    cfgPath = "/userdata/system/configs/mame/" + messSysName[messMode]+ "/" + romBasename + "/"
                     if not os.path.exists(cfgPath):
                         os.makedirs(cfgPath)
         commandArray += [ "-cfg_directory"   ,    cfgPath ]
@@ -103,14 +140,16 @@ class MameGenerator(Generator):
         commandArray += [ "-snapshot_directory" , "/userdata/screenshots/" ]
         commandArray += [ "-diff_directory" ,     "/userdata/saves/mame/diff/" ]
         commandArray += [ "-comment_directory",   "/userdata/saves/mame/comments/" ]
+        commandArray += [ "-homepath" ,           "/userdata/saves/mame/plugins/" ]
+        commandArray += [ "-ctrlrpath" ,          "/userdata/system/configs/mame/ctrlr/" ]
+        commandArray += [ "-inipath" ,            "/userdata/system/configs/mame/;/userdata/system/configs/mame/ini/" ]
+        commandArray += [ "-crosshairpath" ,      "/userdata/bios/mame/artwork/crosshairs/" ]
+        if softList != "":
+            commandArray += [ "-swpath" ,        softDir ]
+            commandArray += [ "-hashpath" ,      softDir + "hash/" ]
 
         # TODO These paths are not handled yet
-        # TODO -homepath            path to base folder for plugin data (read/write)
-        # TODO -ctrlrpath           path to controller definitions
-        # TODO -inipath             path to ini files
-        # TODO -crosshairpath       path to crosshair files
-        # TODO -pluginspath         path to plugin files
-        # TODO -swpath              path to loose software
+        # TODO -swpath              path to loose software - might use if we want software list MESS support
 
         # BGFX video engine : https://docs.mamedev.org/advanced/bgfx.html
         if system.isOptSet("video") and system.config["video"] == "bgfx":
@@ -138,6 +177,8 @@ class MameGenerator(Generator):
         if system.isOptSet("switchres") and system.getOptBoolean("switchres"):
             commandArray += [ "-modeline_generation" ]
             commandArray += [ "-changeres" ]
+            commandArray += [ "-modesetting" ]
+            commandArray += [ "-readconfig" ]
         else:
             commandArray += [ "-nomodeline_generation" ]
             commandArray += [ "-nochangeres" ]
@@ -148,6 +189,10 @@ class MameGenerator(Generator):
             commandArray += [ "-autoror" ]
         if system.isOptSet("rotation") and system.config["rotation"] == "autorol":
             commandArray += [ "-autorol" ]
+
+        # Artwork crop
+        if system.isOptSet("artworkcrop") and system.getOptBoolean("artworkcrop"):
+            commandArray += [ "-artwork_crop" ]
         
         # UI enable - for computer systems, the default sends all keys to the emulated system.
         # This will enable hotkeys, but some keys may pass through to MAME and not be usable in the emulated system.
@@ -157,8 +202,9 @@ class MameGenerator(Generator):
         
         # Finally we pass game name
         # MESS will use the full filename and pass the system & rom type parameters if needed.
-        if messMode == -1:
+        if messMode == -1 and not (system.isOptSet("hiscoreplugin") and system.getOptBoolean("hiscoreplugin") == False):
             commandArray += [ romBasename ]
+            commandArray += [ "-plugins", "-plugin", "hiscore" ]
         else:
             if messSysName[messMode] == "":
                 commandArray += [ romBasename ]
@@ -168,39 +214,111 @@ class MameGenerator(Generator):
                     commandArray += [ system.config["altmodel"] ]
                 else:
                     commandArray += [ messSysName[messMode] ]
+
+                if softList == "":
+                    # Boot disk for Macintosh
+                    # Will use Floppy 1 or Hard Drive, depending on the disk.
+                    if system.name == "macintosh" and system.isOptSet("bootdisk"):
+                        if system.config["bootdisk"] in [ "macos30", "macos608", "macos701", "macos75" ]:
+                            bootType = "-flop1"
+                            bootDisk = "/userdata/bios/" + system.config["bootdisk"] + ".img"
+                        else:
+                            bootType = "-hard"
+                            bootDisk = "/userdata/bios/" + system.config["bootdisk"] + ".chd"
+                        commandArray += [ bootType, bootDisk ]
+
+                    # Alternate ROM type for systems with mutiple media (ie cassette & floppy)
+                    # Mac will auto change floppy 1 to 2 if a boot disk is enabled
+                    if system.name != "macintosh":
+                        if system.isOptSet("altromtype"):
+                            commandArray += [ "-" + system.config["altromtype"] ]
+                        else:
+                            commandArray += [ "-" + messRomType[messMode] ]
+                    else:
+                        if system.isOptSet("bootdisk"):
+                            if ((system.isOptSet("altromtype") and system.config["altromtype"] == "flop1") or not system.isOptSet("altromtype")) and system.config["bootdisk"] in [ "macos30", "macos608", "macos701", "macos75" ]:
+                                commandArray += [ "-flop2" ]
+                            elif system.isOptSet("altromtype"):
+                                commandArray += [ "-" + system.config["altromtype"] ]
+                            else:
+                                commandArray += [ "-" + messRomType[messMode] ]
+                        else:
+                            if system.isOptSet("altromtype"):
+                                commandArray += [ "-" + system.config["altromtype"] ]
+                            else:
+                                commandArray += [ "-" + messRomType[messMode] ]
+                    # Use the full filename for MESS ROMs
+                    commandArray += [ rom ]
+                else:
+                    # Prepare software lists
+                    if softList != "":
+                        if not os.path.exists(softDir):
+                            os.makedirs(softDir)                    
+                        for fileName in os.listdir(softDir):
+                            checkFile = os.path.join(softDir, fileName)
+                            if os.path.islink(checkFile):
+                                os.unlink(checkFile)
+                            if os.path.isdir(checkFile):
+                                shutil.rmtree(checkFile)
+                        if not os.path.exists(softDir + "hash/"):
+                            os.makedirs(softDir + "hash/")
+                        # Clear existing hashfile links
+                        for hashFile in os.listdir(softDir + "hash/"):
+                            if hashFile.endswith('.xml'):
+                                os.unlink(softDir + "hash/" + hashFile)
+                        os.symlink("/usr/bin/mame/hash/" + softList + ".xml", softDir + "hash/" + softList + ".xml")
+                        if softList in subdirSoftList:
+                            romPath = Path(romDirname)
+                            os.symlink(str(romPath.parents[0]), softDir + softList, True)
+                        else:
+                            os.symlink(romDirname, softDir + softList, True)
+                            commandArray += [ os.path.splitext(romBasename)[0] ]
+
+                #TI-99 32k RAM expansion & speech modules - enabled by default
+                if system.name == "ti99":
+                    commandArray += [ "-ioport", "peb" ]
+                    if not system.isOptSet("ti99_32kram") or (system.isOptSet("ti99_32kram") and system.getOptBoolean("ti99_32kram")):
+                        commandArray += ["-ioport:peb:slot2", "32kmem"]
+                    if not system.isOptSet("ti99_speech") or (system.isOptSet("ti99_speech") and system.getOptBoolean("ti99_speech")):
+                        commandArray += ["-ioport:peb:slot3", "speech"]
+
+                autoRunCmd = ""
+                autoRunDelay = 0
                 # Autostart computer games where applicable
-                # Generic boot if only one type is available
-                if messAutoRun[messMode] != "":
-                    commandArray += [ "-autoboot_delay", "2", "-autoboot_command", messAutoRun[messMode] ]
                 # bbc has different boots for floppy & cassette, no special boot for carts
                 if system.name == "bbc":
-                    if system.isOptSet("altromtype"):
-                        if system.config["altromtype"] == "cass":
-                            commandArray += [ '-autoboot_delay', '2', '-autoboot_command', '*tape\\nchain""\\n' ]
-                        elif left(system.config["altromtype"], 4) == "flop":
-                            commandArray += [ '-autoboot_delay',  '3',  '-autoboot_command', '*cat\\n*exec !boot\\n' ]
+                    if system.isOptSet("altromtype") or softList != "":
+                        if system.config["altromtype"] == "cass" or softList[-4:] == "cass":
+                            autoRunCmd = '*tape\\nchain""\\n'
+                            autoRunDelay = 2
+                        elif left(system.config["altromtype"], 4) == "flop" or softList[-4:] == "flop":
+                            autoRunCmd = '*cat\\n\\n\\n\\n*exec !boot\\n'
+                            autoRunDelay = 3
                     else:
-                        commandArray += [ '-autoboot_delay',  '3',  '-autoboot_command', '*cat\\n*exec !boot\\n' ]
+                        autoRunCmd = '*cat\\n\\n\\n\\n*exec !boot\\n'
+                        autoRunDelay = 3
                 # fm7 boots floppies, needs cassette loading
-                if system.name == "fm7" and system.isOptSet("altromtype") and system.config["altromtype"] == "cass":
-                    commandArray += [ '-autoboot_delay', '5', '-autoboot_command', 'LOADM”“,,R\\n' ]
-                # Alternate ROM type for systems with mutiple media (ie cassette & floppy)
-                if system.isOptSet("altromtype"):
-                    commandArray += [ "-" + system.config["altromtype"] ]
+                elif system.name == "fm7":
+                    if system.isOptSet("altromtype") or softList != "":
+                        if system.config["altromtype"] == "cass" or softList[-4:] == "cass":
+                            autoRunCmd = 'LOADM”“,,R\\n'
+                            autoRunDelay = 5
                 else:
-                    commandArray += [ "-" + messRomType[messMode] ]
-                # Use the full filename for MESS ROMs
-                commandArray += [ rom ]
-        
-        
-        # config file
-        config = minidom.Document()
-        configFile = cfgPath + "default.cfg"
-        if os.path.exists(configFile):
-            try:
-                config = minidom.parse(configFile)
-            except:
-                pass # reinit the file
+                    # Check for an override file, otherwise use generic (if it exists)
+                    autoRunCmd = messAutoRun[messMode]
+                    autoRunFile = '/usr/share/batocera/configgen/data/mame/' + softList + '_autoload.csv'
+                    if os.path.exists(autoRunFile):
+                        openARFile = open(autoRunFile, 'r')
+                        with openARFile:
+                            autoRunList = csv.reader(openARFile, delimiter=';', quotechar="'")
+                            for row in autoRunList:
+                                if row[0].casefold() == os.path.splitext(romBasename)[0].casefold():
+                                    autoRunCmd = row[1] + "\\n"
+                                    autoRunDelay = 3
+                if autoRunCmd != "":
+                    if autoRunCmd.startswith("'"):
+                        autoRunCmd.replace("'", "")
+                    commandArray += [ "-autoboot_delay", str(autoRunDelay), "-autoboot_command", autoRunCmd ]
         
         # Alternate D-Pad Mode
         if system.isOptSet("altdpad"):
@@ -208,29 +326,27 @@ class MameGenerator(Generator):
         else:
             dpadMode = 0
         
+        buttonLayout = getMameControlScheme(system, romBasename)
+                
         if messMode == -1:
-            MameGenerator.generatePadsConfig(config, playersControllers, "", dpadMode, cfgPath)
+            mameControllers.generatePadsConfig(cfgPath, playersControllers, "", dpadMode, buttonLayout, customCfg)
         else:
-            MameGenerator.generatePadsConfig(config, playersControllers, messSysName[messMode], dpadMode, cfgPath)
-
-        # save the config file
-        #mameXml = open(configFile, "w")
-        # TODO: python 3 - workawround to encode files in utf-8
-        mameXml = codecs.open(configFile, "w", "utf-8")
-        dom_string = os.linesep.join([s for s in config.toprettyxml().splitlines() if s.strip()]) # remove ugly empty lines while minicom adds them...
-        mameXml.write(dom_string)
-
+            mameControllers.generatePadsConfig(cfgPath, playersControllers, messSysName[messMode], dpadMode, buttonLayout, customCfg)
+        
         # bezels
         if 'bezel' not in system.config or system.config['bezel'] == '':
-            bezel = None
+            bezelSet = None
         else:
-            bezel = system.config['bezel']
+            bezelSet = system.config['bezel']
         if system.isOptSet('forceNoBezel') and system.getOptBoolean('forceNoBezel'):
-            bezel = None
+            bezelSet = None
         try:
-            MameGenerator.writeBezelConfig(bezel, system, rom)
+            if messMode != -1:
+                MameGenerator.writeBezelConfig(bezelSet, system, rom, messSysName[messMode])
+            else:
+                MameGenerator.writeBezelConfig(bezelSet, system, rom, "")
         except:
-            MameGenerator.writeBezelConfig(None, system, rom)
+            MameGenerator.writeBezelConfig(None, system, rom, "")
 
         return Command.Command(array=commandArray, env={"PWD":"/usr/bin/mame/","XDG_CONFIG_HOME":batoceraFiles.CONF, "XDG_CACHE_HOME":batoceraFiles.SAVES})
 
@@ -267,508 +383,96 @@ class MameGenerator(Generator):
             old.unlink()
 
     @staticmethod
-    def generatePadsConfig(config, playersControllers, sysName, dpadMode, cfgPath):
-        mappings = {
-            "JOYSTICK_UP":    "joystick1up",
-            "JOYSTICK_DOWN":  "joystick1down",
-            "JOYSTICK_LEFT":  "joystick1left",
-            "JOYSTICK_RIGHT": "joystick1right",
-            "JOYSTICKLEFT_UP":    "joystick1up",
-            "JOYSTICKLEFT_DOWN":  "joystick1down",
-            "JOYSTICKLEFT_LEFT":  "joystick1left",
-            "JOYSTICKLEFT_RIGHT": "joystick1right",
-            "JOYSTICKRIGHT_UP": "joystick2up",
-            "JOYSTICKRIGHT_DOWN": "joystick2down",
-            "JOYSTICKRIGHT_LEFT": "joystick2left",
-            "JOYSTICKRIGHT_RIGHT": "joystick2right",
-            "BUTTON1": "b",
-            "BUTTON2": "y",
-            "BUTTON3": "a",
-            "BUTTON4": "x",
-            "BUTTON5": "pageup",
-            "BUTTON6": "pagedown",
-            "BUTTON7": "l2",
-            "BUTTON8": "r2",
-            "BUTTON9": "l3",
-            "BUTTON10": "r3"
-            #"BUTTON11": "",
-            #"BUTTON12": "",
-            #"BUTTON13": "",
-            #"BUTTON14": "",
-            #"BUTTON15": ""
-        }
-
-        xml_mameconfig = MameGenerator.getRoot(config, "mameconfig")
-        xml_system     = MameGenerator.getSection(config, xml_mameconfig, "system")
-        xml_system.setAttribute("name", "default")
-
-        MameGenerator.removeSection(config, xml_system, "input")
-        xml_input = config.createElement("input")
-        xml_system.appendChild(xml_input)
-        
-        # Open or create alternate config file for systems with special controllers/settings
-        # If the system/game is set to per game config, don't try to open/reset an existing file, only write if it's blank or going to the shared cfg folder
-        if sysName in ("cdimono1", "apfm1000", "astrocde", "adam", "arcadia", "gamecom", "tutor", "crvision", "bbcb"):
-            config_alt = minidom.Document()
-            configFile_alt = cfgPath + sysName + ".cfg"
-            if os.path.exists(configFile_alt) and cfgPath == "/userdata/system/configs/mame/":
-                writeConfig = True
-                try:
-                    config_alt = minidom.parse(configFile_alt)
-                except:
-                    pass # reinit the file
-            elif not os.path.exists(configFile_alt):
-                writeConfig = True
-            else:
-                writeConfig = False
-                try:
-                    config_alt = minidom.parse(configFile_alt)
-                except:
-                    pass # reinit the file
-            xml_mameconfig_alt = MameGenerator.getRoot(config_alt, "mameconfig")
-            xml_system_alt = MameGenerator.getSection(config_alt, xml_mameconfig_alt, "system")
-            xml_system_alt.setAttribute("name", sysName)
-            
-            MameGenerator.removeSection(config_alt, xml_system_alt, "input")
-            xml_input_alt = config_alt.createElement("input")
-            xml_system_alt.appendChild(xml_input_alt)
-        
-        nplayer = 1
-        maxplayers = len(playersControllers)
-        for playercontroller, pad in sorted(playersControllers.items()):
-            mappings_use = mappings
-            if "joystick1up" not in pad.inputs:
-                mappings_use["JOYSTICK_UP"] = "up"
-                mappings_use["JOYSTICK_DOWN"] = "down"
-                mappings_use["JOYSTICK_LEFT"] = "left"
-                mappings_use["JOYSTICK_RIGHT"] = "right"
-                
-            for mapping in mappings_use:
-                if mappings_use[mapping] in pad.inputs:
-                    xml_input.appendChild(MameGenerator.generatePortElement(config, nplayer, pad.index, mapping, mappings_use[mapping], pad.inputs[mappings_use[mapping]], False, dpadMode))
-                else:
-                    rmapping = MameGenerator.reverseMapping(mappings_use[mapping])
-                    if rmapping in pad.inputs:
-                        xml_input.appendChild(MameGenerator.generatePortElement(config, nplayer, pad.index, mapping, mappings_use[mapping], pad.inputs[rmapping], True, dpadMode))
-                
-            # Special case for CD-i - doesn't use default controls, map special controller
-            # Keep orginal mapping functions for menus etc, create system-specific config file dor CD-i.
-            if nplayer == 1 and sysName == "cdimono1":
-                xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':slave_hle:MOUSEBTN', nplayer, pad.index, "P1_BUTTON1", int(pad.inputs["b"].id) + 1, "1", "0"))
-                xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':slave_hle:MOUSEBTN', nplayer, pad.index, "P1_BUTTON2", int(pad.inputs["y"].id) + 1, "2", "0"))
-                if dpadMode == 0:
-                    xml_input_alt.appendChild(MameGenerator.generateIncDecPortElement(config_alt, ':slave_hle:MOUSEX', nplayer, pad.index, "P1_MOUSE_X", "JOYCODE_{}_YAXIS_RIGHT_SWITCH OR JOYCODE_{}_HAT1RIGHT", "JOYCODE_{}_YAXIS_LEFT_SWITCH OR JOYCODE_{}_HAT1LEFT", "1023", "0", "10"))
-                    xml_input_alt.appendChild(MameGenerator.generateIncDecPortElement(config_alt, ':slave_hle:MOUSEY', nplayer, pad.index, "P1_MOUSE_Y", "JOYCODE_{}_YAXIS_DOWN_SWITCH OR JOYCODE_{}_HAT1DOWN", "JOYCODE_{}_YAXIS_UP_SWITCH OR JOYCODE_{}_HAT1UP", "1023", "0", "10"))
-                elif dpadMode == 1:
-                    xml_input_alt.appendChild(MameGenerator.generateIncDecPortElement(config_alt, ':slave_hle:MOUSEX', nplayer, pad.index, "P1_MOUSE_X", "JOYCODE_{}_YAXIS_RIGHT_SWITCH OR JOYCODE_{}_HAT1RIGHT OR JOYCODE_{}_BUTTON16", "JOYCODE_{}_YAXIS_LEFT_SWITCH OR JOYCODE_{}_HAT1LEFT OR JOYCODE_{}_BUTTON15", "1023", "0", "10"))
-                    xml_input_alt.appendChild(MameGenerator.generateIncDecPortElement(config_alt, ':slave_hle:MOUSEY', nplayer, pad.index, "P1_MOUSE_Y", "JOYCODE_{}_YAXIS_DOWN_SWITCH OR JOYCODE_{}_HAT1DOWN OR JOYCODE_{}_BUTTON14", "JOYCODE_{}_YAXIS_UP_SWITCH OR JOYCODE_{}_HAT1UP OR JOYCODE_{}_BUTTON13", "1023", "0", "10"))
-                else:
-                    xml_input_alt.appendChild(MameGenerator.generateIncDecPortElement(config_alt, ':slave_hle:MOUSEX', nplayer, pad.index, "P1_MOUSE_X", "JOYCODE_{}_YAXIS_RIGHT_SWITCH OR JOYCODE_{}_HAT1RIGHT OR JOYCODE_{}_BUTTON12", "JOYCODE_{}_YAXIS_LEFT_SWITCH OR JOYCODE_{}_HAT1LEFT OR JOYCODE_{}_BUTTON11", "1023", "0", "10"))
-                    xml_input_alt.appendChild(MameGenerator.generateIncDecPortElement(config_alt, ':slave_hle:MOUSEY', nplayer, pad.index, "P1_MOUSE_Y", "JOYCODE_{}_YAXIS_DOWN_SWITCH OR JOYCODE_{}_HAT1DOWN OR JOYCODE_{}_BUTTON14", "JOYCODE_{}_YAXIS_UP_SWITCH OR JOYCODE_{}_HAT1UP OR JOYCODE_{}_BUTTON13", "1023", "0", "10"))
-                
-                #Hide LCD display
-                MameGenerator.removeSection(config_alt, xml_system_alt, "video")
-                xml_video_alt = config_alt.createElement("video")                
-                xml_system_alt.appendChild(xml_video_alt)
-                
-                xml_screencfg_alt = config_alt.createElement("target")
-                xml_screencfg_alt.setAttribute("index", "0")
-                xml_screencfg_alt.setAttribute("view", "Main Screen Standard (4:3)")
-                xml_video_alt.appendChild(xml_screencfg_alt)
-                
-            # Special case for APFM1000 - uses numpad controllers
-            if nplayer <= 2 and sysName == "apfm1000":
-                if nplayer == 1:
-                    # Based on Colecovision button mapping, changed slightly since Enter = Fire
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy.2', nplayer, pad.index, "OTHER", int(pad.inputs["a"].id) + 1, "32", "32"))        # Clear
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy.3', nplayer, pad.index, "OTHER", int(pad.inputs["b"].id) + 1, "32", "32"))        # Enter/Fire
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy.0', nplayer, pad.index, "OTHER", int(pad.inputs["x"].id) + 1, "16", "16"))        # 1
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy.3', nplayer, pad.index, "OTHER", int(pad.inputs["y"].id) + 1, "16", "16"))        # 2
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy.2', nplayer, pad.index, "OTHER", int(pad.inputs["pagedown"].id) + 1, "16", "16")) # 3
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy.0', nplayer, pad.index, "OTHER", int(pad.inputs["pageup"].id) + 1, "64", "64"))   # 4
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy.3', nplayer, pad.index, "OTHER", int(pad.inputs["r2"].id) + 1, "64", "64"))       # 5
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy.2', nplayer, pad.index, "OTHER", int(pad.inputs["l2"].id) + 1, "64", "64"))       # 6
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy.0', nplayer, pad.index, "OTHER", int(pad.inputs["r3"].id) + 1, "128", "128"))     # 7
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy.3', nplayer, pad.index, "OTHER", int(pad.inputs["l3"].id) + 1, "128", "128"))     # 8
-                    xml_input_alt.appendChild(MameGenerator.generateKeycodePortElement(config_alt, ':joy.2', "OTHER", "5", "128", "128"))                                                  # 9
-                    xml_input_alt.appendChild(MameGenerator.generateKeycodePortElement(config_alt, ':joy.0', "OTHER", "1", "32", "32"))                                                    # 0
-                elif nplayer == 2:
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy.2', nplayer, pad.index, "TYPE_OTHER(243,1)", int(pad.inputs["a"].id) + 1, "2", "2"))        # Clear
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy.3', nplayer, pad.index, "TYPE_OTHER(243,1)", int(pad.inputs["b"].id) + 1, "2", "2"))        # Enter/Fire
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy.0', nplayer, pad.index, "TYPE_OTHER(243,1)", int(pad.inputs["x"].id) + 1, "1", "1"))        # 1
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy.3', nplayer, pad.index, "TYPE_OTHER(243,1)", int(pad.inputs["y"].id) + 1, "1", "1"))        # 2
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy.2', nplayer, pad.index, "TYPE_OTHER(243,1)", int(pad.inputs["pagedown"].id) + 1, "1", "1")) # 3
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy.0', nplayer, pad.index, "TYPE_OTHER(243,1)", int(pad.inputs["pageup"].id) + 1, "4", "4"))   # 4
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy.3', nplayer, pad.index, "TYPE_OTHER(243,1)", int(pad.inputs["r2"].id) + 1, "4", "4"))       # 5
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy.2', nplayer, pad.index, "TYPE_OTHER(243,1)", int(pad.inputs["l2"].id) + 1, "4", "4"))       # 6
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy.0', nplayer, pad.index, "TYPE_OTHER(243,1)", int(pad.inputs["r3"].id) + 1, "8", "8"))       # 7
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy.3', nplayer, pad.index, "TYPE_OTHER(243,1)", int(pad.inputs["l3"].id) + 1, "8", "8"))       # 8
-                    xml_input_alt.appendChild(MameGenerator.generateKeycodePortElement(config_alt, ':joy.2', "TYPE_OTHER(243,1)", "6", "8", "8"))                                                    # 9
-                    xml_input_alt.appendChild(MameGenerator.generateKeycodePortElement(config_alt, ':joy.0', "TYPE_OTHER(243,1)", "2", "2", "2"))                                                    # 0
-            # Special case for Astrocade - numpad on console
-            if nplayer == 1 and sysName == "astrocde":
-                # Based on Colecovision button mapping, keypad is on the console
-                # A auto maps to Fire, using B for 0, Select for 9, Start for = (which is the "enter" key)
-                xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':KEYPAD2', nplayer, pad.index, "KEYPAD", int(pad.inputs["b"].id) + 1, "32", "0"))        # 0
-                xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':KEYPAD3', nplayer, pad.index, "KEYPAD", int(pad.inputs["x"].id) + 1, "16", "0"))        # 1
-                xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':KEYPAD2', nplayer, pad.index, "KEYPAD", int(pad.inputs["y"].id) + 1, "16", "0"))        # 2
-                xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':KEYPAD1', nplayer, pad.index, "KEYPAD", int(pad.inputs["pagedown"].id) + 1, "16", "0")) # 3
-                xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':KEYPAD3', nplayer, pad.index, "KEYPAD", int(pad.inputs["pageup"].id) + 1, "8", "0"))    # 4
-                xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':KEYPAD2', nplayer, pad.index, "KEYPAD", int(pad.inputs["r2"].id) + 1, "8", "0"))        # 5
-                xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':KEYPAD1', nplayer, pad.index, "KEYPAD", int(pad.inputs["l2"].id) + 1, "8", "0"))        # 6
-                xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':KEYPAD3', nplayer, pad.index, "KEYPAD", int(pad.inputs["r3"].id) + 1, "4", "0"))        # 7
-                xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':KEYPAD2', nplayer, pad.index, "KEYPAD", int(pad.inputs["l3"].id) + 1, "4", "0"))        # 8
-                xml_input_alt.appendChild(MameGenerator.generateKeycodePortElement(config_alt, ':KEYPAD1', "KEYPAD", "6", "4", "0"))                                                     # 9
-                xml_input_alt.appendChild(MameGenerator.generateKeycodePortElement(config_alt, ':KEYPAD0', "KEYPAD", "1", "32", "0"))                                                    # = (Start)
-            
-            # Special case for Adam - numpad
-            if nplayer == 1 and sysName == "adam":
-                # Based on Colecovision button mapping - not enough buttons to map 0 & 9
-                # Fire 1 & 2 map to A & B
-                xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy1:hand:KEYPAD', nplayer, pad.index, "KEYPAD", int(pad.inputs["x"].id) + 1, "2", "2"))          # 1
-                xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy1:hand:KEYPAD', nplayer, pad.index, "KEYPAD", int(pad.inputs["a"].id) + 1, "4", "4"))          # 2
-                xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy1:hand:KEYPAD', nplayer, pad.index, "KEYPAD", int(pad.inputs["pagedown"].id) + 1, "8", "8"))   # 3
-                xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy1:hand:KEYPAD', nplayer, pad.index, "KEYPAD", int(pad.inputs["pageup"].id) + 1, "16", "16"))   # 4
-                xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy1:hand:KEYPAD', nplayer, pad.index, "KEYPAD", int(pad.inputs["r2"].id) + 1, "32", "32"))       # 5
-                xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy1:hand:KEYPAD', nplayer, pad.index, "KEYPAD", int(pad.inputs["l2"].id) + 1, "64", "64"))       # 6
-                xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy1:hand:KEYPAD', nplayer, pad.index, "KEYPAD", int(pad.inputs["r3"].id) + 1, "128", "128"))     # 7
-                xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy1:hand:KEYPAD', nplayer, pad.index, "KEYPAD", int(pad.inputs["l3"].id) + 1, "512", "512"))     # 8
-                # xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy1:hand:KEYPAD', nplayer, pad.index, "KEYPAD", int(pad.inputs["l3"].id) + 1, "128", "128"))     9
-                # xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':joy1:hand:KEYPAD', nplayer, pad.index, "KEYPAD", , "1", ""))                                      0                
-                xml_input_alt.appendChild(MameGenerator.generateKeycodePortElement(config_alt, ':joy1:hand:KEYPAD', "KEYPAD", "1", "1024", "0"))                                                   # #
-                xml_input_alt.appendChild(MameGenerator.generateKeycodePortElement(config_alt, ':joy1:hand:KEYPAD', "KEYPAD", "5", "2048", "0"))                                                   # *
-            
-            # Special case for Arcadia
-            if nplayer <= 2 and sysName == "arcadia":
-                if nplayer == 1:
-                    # Based on Colecovision button mapping - not enough buttons to map clear, enter
-                    # No separate fire button, Start + Select on console (automapped), Option button also on console.
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':controller1_col1', nplayer, pad.index, "KEYPAD", int(pad.inputs["a"].id) + 1, "8", "0"))        # 1
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':controller1_col2', nplayer, pad.index, "KEYPAD", int(pad.inputs["b"].id) + 1, "8", "0"))        # 2
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':controller1_col3', nplayer, pad.index, "KEYPAD", int(pad.inputs["x"].id) + 1, "8", "0"))        # 3
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':controller1_col1', nplayer, pad.index, "KEYPAD", int(pad.inputs["y"].id) + 1, "4", "0"))        # 4
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':controller1_col2', nplayer, pad.index, "KEYPAD", int(pad.inputs["pagedown"].id) + 1, "4", "0")) # 5
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':controller1_col3', nplayer, pad.index, "KEYPAD", int(pad.inputs["pageup"].id) + 1, "4", "0"))   # 6
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':controller1_col1', nplayer, pad.index, "KEYPAD", int(pad.inputs["r2"].id) + 1, "2", "0"))       # 7
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':controller1_col2', nplayer, pad.index, "KEYPAD", int(pad.inputs["l2"].id) + 1, "2", "0"))       # 8
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':controller1_col3', nplayer, pad.index, "KEYPAD", int(pad.inputs["r3"].id) + 1, "2", "0"))       # 9
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':controller1_col2', nplayer, pad.index, "KEYPAD", int(pad.inputs["l3"].id) + 1, "1", "0"))       # 0
-                    # xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':controller1_col1', nplayer, pad.index, "KEYPAD", , "1", "0"))                                 # Clear
-                    # xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':controller1_col3', nplayer, pad.index, "KEYPAD", , "1", "0"))                                 # Enter
-                elif nplayer == 2:
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':controller2_col1', nplayer, pad.index, "KEYPAD", int(pad.inputs["a"].id) + 1, "8", "0"))        # 1
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':controller2_col2', nplayer, pad.index, "KEYPAD", int(pad.inputs["b"].id) + 1, "8", "0"))        # 2
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':controller2_col3', nplayer, pad.index, "KEYPAD", int(pad.inputs["x"].id) + 1, "8", "0"))        # 3
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':controller2_col1', nplayer, pad.index, "KEYPAD", int(pad.inputs["y"].id) + 1, "4", "0"))        # 4
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':controller2_col2', nplayer, pad.index, "KEYPAD", int(pad.inputs["pagedown"].id) + 1, "4", "0")) # 5
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':controller2_col3', nplayer, pad.index, "KEYPAD", int(pad.inputs["pageup"].id) + 1, "4", "0"))   # 6
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':controller2_col1', nplayer, pad.index, "KEYPAD", int(pad.inputs["r2"].id) + 1, "2", "0"))       # 7
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':controller2_col2', nplayer, pad.index, "KEYPAD", int(pad.inputs["l2"].id) + 1, "2", "0"))       # 8
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':controller2_col3', nplayer, pad.index, "KEYPAD", int(pad.inputs["r3"].id) + 1, "2", "0"))       # 9
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':controller2_col3', nplayer, pad.index, "KEYPAD", int(pad.inputs["l3"].id) + 1, "1", "0"))       # 0
-                    # xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':controller1_col1', nplayer, pad.index, "KEYPAD", , "1", "0"))                                 # Clear
-                    # xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':controller1_col3', nplayer, pad.index, "KEYPAD", , "1", "0"))                                 # Enter
-            
-            # Special case for Gamecom - buttons don't map normally
-            if nplayer == 1 and sysName == "gamecom":
-                xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':IN0', nplayer, pad.index, "P1_BUTTON1", int(pad.inputs["y"].id) + 1, "128", "128")) # A
-                xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':IN1', nplayer, pad.index, "P1_BUTTON2", int(pad.inputs["x"].id) + 1, "1", "1"))     # B
-                xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':IN1', nplayer, pad.index, "P1_BUTTON3", int(pad.inputs["b"].id) + 1, "2", "2"))     # C
-                xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':IN2', nplayer, pad.index, "P1_BUTTON4", int(pad.inputs["a"].id) + 1, "2", "2"))     # D
-                xml_input_alt.appendChild(MameGenerator.generateKeycodePortElement(config_alt, ':IN0', "OTHER", "5", "16", "16"))                                                    # Menu
-                xml_input_alt.appendChild(MameGenerator.generateKeycodePortElement(config_alt, ':IN0', "OTHER", "1", "32", "32"))                                                    # Pause
-            
-            # Special case for Tomy Tutor - directions don't map normally
-            # Also maps arrow keys to directional input & enter to North button to get through the initial menu without a keyboard
-            if nplayer <= 2 and sysName == "tutor":
-                if nplayer == 1:
-                    if dpadMode == 0:
-                        xml_input_alt.appendChild(MameGenerator.generateDirectionPortElement(config_alt, ':LINE4_alt', nplayer, pad.index, "P1_JOYSTICK_DOWN", "JOYCODE_{}_YAXIS_DOWN_SWITCH OR JOYCODE_{}_HAT1DOWN", "16", "0"))     # Down
-                        xml_input_alt.appendChild(MameGenerator.generateDirectionPortElement(config_alt, ':LINE4_alt', nplayer, pad.index, "P1_JOYSTICK_LEFT", "JOYCODE_{}_YAXIS_LEFT_SWITCH OR JOYCODE_{}_HAT1LEFT", "32", "0"))     # Left
-                        xml_input_alt.appendChild(MameGenerator.generateDirectionPortElement(config_alt, ':LINE4_alt', nplayer, pad.index, "P1_JOYSTICK_UP", "JOYCODE_{}_YAXIS_UP_SWITCH OR JOYCODE_{}_HAT1UP", "64", "0"))           # Up
-                        xml_input_alt.appendChild(MameGenerator.generateDirectionPortElement(config_alt, ':LINE4_alt', nplayer, pad.index, "P1_JOYSTICK_RIGHT", "JOYCODE_{}_YAXIS_RIGHT_SWITCH OR JOYCODE_{}_HAT1RIGHT", "128", "0")) # Right
-                    elif dpadMode == 1:
-                        xml_input_alt.appendChild(MameGenerator.generateDirectionPortElement(config_alt, ':LINE4_alt', nplayer, pad.index, "P1_JOYSTICK_DOWN", "JOYCODE_{}_YAXIS_DOWN_SWITCH OR JOYCODE_{}_HAT1DOWN OR JOYCODE_{}_BUTTON14", "16", "0"))     # Down
-                        xml_input_alt.appendChild(MameGenerator.generateDirectionPortElement(config_alt, ':LINE4_alt', nplayer, pad.index, "P1_JOYSTICK_LEFT", "JOYCODE_{}_YAXIS_LEFT_SWITCH OR JOYCODE_{}_HAT1LEFT OR JOYCODE_{}_BUTTON15", "32", "0"))     # Left
-                        xml_input_alt.appendChild(MameGenerator.generateDirectionPortElement(config_alt, ':LINE4_alt', nplayer, pad.index, "P1_JOYSTICK_UP", "JOYCODE_{}_YAXIS_UP_SWITCH OR JOYCODE_{}_HAT1UP OR JOYCODE_{}_BUTTON13", "64", "0"))           # Up
-                        xml_input_alt.appendChild(MameGenerator.generateDirectionPortElement(config_alt, ':LINE4_alt', nplayer, pad.index, "P1_JOYSTICK_RIGHT", "JOYCODE_{}_YAXIS_RIGHT_SWITCH OR JOYCODE_{}_HAT1RIGHT OR JOYCODE_{}_BUTTON16", "128", "0")) # Right
-                    else:                        
-                        xml_input_dChild(MameGenerator.generateDirectionPortElement(config_alt, ':LINE4_alt', nplayer, pad.index, "P1_JOYSTICK_LEFT", "JOYCODE_{}_YAXIS_LEFT_SWITCH OR JOYCODE_{}_HAT1LEFT OR JOYCODE_{}_BUTTON11", "32", "0"))     # Left
-                        xml_input_alt.appendChild(MameGenerator.generateDirectionPortElement(config_alt, ':LINE4_alt', nplayer, pad.index, "P1_JOYSTICK_UP", "JOYCODE_{}_YAXIS_UP_SWITCH OR JOYCODE_{}_HAT1UP OR JOYCODE_{}_BUTTON13", "64", "0"))           # Up
-                        xml_input_alt.appendChild(MameGenerator.generateDirectionPortElement(config_alt, ':LINE4_alt', nplayer, pad.index, "P1_JOYSTICK_RIGHT", "JOYCODE_{}_YAXIS_RIGHT_SWITCH OR JOYCODE_{}_HAT1RIGHT OR JOYCODE_{}_BUTTON12", "128", "0")) # Right
-                    xml_input_alt.appendChild(MameGenerator.generateComboPortElement(config_alt, ':LINE6', pad.index, "KEYBOARD", "ENTER", int(pad.inputs["a"].id) + 1, "16", "0"))      # Enter Key
-                    xml_input_alt.appendChild(MameGenerator.generateComboPortElement(config_alt, ':LINE7', pad.index, "KEYBOARD", "DOWN", int(pad.inputs["pagedown"].id) + 1, "4", "0")) # Down Arrow
-                elif nplayer == 2:
-                    if dpadMode == 0:
-                        xml_input_alt.appendChild(MameGenerator.generateDirectionPortElement(config_alt, ':LINE2_alt', nplayer, pad.index, "P2_JOYSTICK_DOWN", "JOYCODE_{}_YAXIS_DOWN_SWITCH OR JOYCODE_{}_HAT1DOWN", "16", "0"))     # Down
-                        xml_input_alt.appendChild(MameGenerator.generateDirectionPortElement(config_alt, ':LINE2_alt', nplayer, pad.index, "P2_JOYSTICK_LEFT", "JOYCODE_{}_YAXIS_LEFT_SWITCH OR JOYCODE_{}_HAT1LEFT", "32", "0"))     # Left
-                        xml_input_alt.appendChild(MameGenerator.generateDirectionPortElement(config_alt, ':LINE2_alt', nplayer, pad.index, "P2_JOYSTICK_UP", "JOYCODE_{}_YAXIS_UP_SWITCH OR JOYCODE_{}_HAT1UP", "64", "0"))           # Up
-                        xml_input_alt.appendChild(MameGenerator.generateDirectionPortElement(config_alt, ':LINE2_alt', nplayer, pad.index, "P2_JOYSTICK_RIGHT", "JOYCODE_{}_YAXIS_RIGHT_SWITCH OR JOYCODE_{}_HAT1RIGHT", "128", "0")) # Right
-                    elif dpadMode == 1:
-                        xml_input_alt.appendChild(MameGenerator.generateDirectionPortElement(config_alt, ':LINE2_alt', nplayer, pad.index, "P2_JOYSTICK_DOWN", "JOYCODE_{}_YAXIS_DOWN_SWITCH OR JOYCODE_{}_HAT1DOWN OR JOYCODE_{}_BUTTON14", "16", "0"))     # Down
-                        xml_input_alt.appendChild(MameGenerator.generateDirectionPortElement(config_alt, ':LINE2_alt', nplayer, pad.index, "P2_JOYSTICK_LEFT", "JOYCODE_{}_YAXIS_LEFT_SWITCH OR JOYCODE_{}_HAT1LEFT OR JOYCODE_{}_BUTTON15", "32", "0"))     # Left
-                        xml_input_alt.appendChild(MameGenerator.generateDirectionPortElement(config_alt, ':LINE2_alt', nplayer, pad.index, "P2_JOYSTICK_UP", "JOYCODE_{}_YAXIS_UP_SWITCH OR JOYCODE_{}_HAT1UP OR JOYCODE_{}_BUTTON13", "64", "0"))           # Up
-                        xml_input_alt.appendChild(MameGenerator.generateDirectionPortElement(config_alt, ':LINE2_alt', nplayer, pad.index, "P2_JOYSTICK_RIGHT", "JOYCODE_{}_YAXIS_RIGHT_SWITCH OR JOYCODE_{}_HAT1RIGHT OR JOYCODE_{}_BUTTON16", "128", "0")) # Right
-                    else:
-                        xml_input_alt.appendChild(MameGenerator.generateDirectionPortElement(config_alt, ':LINE2_alt', nplayer, pad.index, "P2_JOYSTICK_DOWN", "JOYCODE_{}_YAXIS_DOWN_SWITCH OR JOYCODE_{}_HAT1DOWN OR JOYCODE_{}_BUTTON14", "16", "0"))     # Down
-                        xml_input_alt.appendChild(MameGenerator.generateDirectionPortElement(config_alt, ':LINE2_alt', nplayer, pad.index, "P2_JOYSTICK_LEFT", "JOYCODE_{}_YAXIS_LEFT_SWITCH OR JOYCODE_{}_HAT1LEFT OR JOYCODE_{}_BUTTON11", "32", "0"))     # Left
-                        xml_input_alt.appendChild(MameGenerator.generateDirectionPortElement(config_alt, ':LINE2_alt', nplayer, pad.index, "P2_JOYSTICK_UP", "JOYCODE_{}_YAXIS_UP_SWITCH OR JOYCODE_{}_HAT1UP OR JOYCODE_{}_BUTTON13", "64", "0"))           # Up
-                        xml_input_alt.appendChild(MameGenerator.generateDirectionPortElement(config_alt, ':LINE2_alt', nplayer, pad.index, "P2_JOYSTICK_RIGHT", "JOYCODE_{}_YAXIS_RIGHT_SWITCH OR JOYCODE_{}_HAT1RIGHT OR JOYCODE_{}_BUTTON12", "128", "0")) # Right
-            
-            # Special case for crvision - maps the 4 corner buttons + 2nd from upper right since MAME considers that button 2.
-            if nplayer <= 2 and sysName == "crvision":
-                if nplayer == 1:
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':PA1.7', nplayer, pad.index, "P1_BUTTON1", int(pad.inputs["y"].id) + 1, "128", "128"))  # P1 Button 1 (Shift)
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':PA0.7', nplayer, pad.index, "P1_BUTTON2", int(pad.inputs["x"].id) + 1, "128", "128"))  # P1 Button 2 (Control)
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':PA0.2', nplayer, pad.index, "KEYBOARD", int(pad.inputs["pagedown"].id) + 1, "8", "8")) # P1 Upper Right (1)
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':PA1.1', nplayer, pad.index, "KEYBOARD", int(pad.inputs["b"].id) + 1, "4", "4"))        # P1 Lower Left (B)
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':PA1.4', nplayer, pad.index, "KEYBOARD", int(pad.inputs["a"].id) + 1, "64", "64"))      # P1 Lower Right (6)
-                    xml_input_alt.appendChild(MameGenerator.generateKeycodePortElement(config_alt, ':NMI', "P1_START", "1", "1", "0"))                                                      # Reset/Start
-                elif nplayer == 2:
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':PA3.7', nplayer, pad.index, "P2_BUTTON1", int(pad.inputs["y"].id) + 1, "128", "128"))  # P2 Button 1 (-/=)
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':PA2.7', nplayer, pad.index, "P2_BUTTON2", int(pad.inputs["x"].id) + 1, "128", "128"))  # P2 Button 2 (Right)
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':PA2.2', nplayer, pad.index, "KEYBOARD", int(pad.inputs["pagedown"].id) + 1, "8", "8")) # P2 Upper Right (Space)
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':PA3.1', nplayer, pad.index, "KEYBOARD", int(pad.inputs["b"].id) + 1, "4", "4"))        # P2 Lower Left (7)
-                    xml_input_alt.appendChild(MameGenerator.generateSpecialPortElement(config_alt, ':PA3.1', nplayer, pad.index, "KEYBOARD", int(pad.inputs["a"].id) + 1, "64", "64"))      # P2 Lower Right (N)
-            
-            # BBC Micro - joystick not emulated/supported for most games, map some to gamepad
-            if nplayer == 1 and sysName == "bbcb":
-                xml_kbenable_alt = config_alt.createElement("keyboard")
-                xml_kbenable_alt.setAttribute("tag", ":")
-                xml_kbenable_alt.setAttribute("enabled", "1")
-                xml_input_alt.appendChild(xml_kbenable_alt)
-                xml_input_alt.appendChild(MameGenerator.generateComboPortElement(config_alt, ':COL8', pad.index, "KEYBOARD", "QUOTE", int(pad.inputs["y"].id) + 1, "64", "64"))        # *
-                xml_input_alt.appendChild(MameGenerator.generateComboPortElement(config_alt, ':COL8', pad.index, "KEYBOARD", "SLASH", int(pad.inputs["x"].id) + 1, "16", "16"))        # ?
-                xml_input_alt.appendChild(MameGenerator.generateComboPortElement(config_alt, ':COL1', pad.index, "KEYBOARD", "Z", int(pad.inputs["b"].id) + 1, "64", "64"))            # Z
-                xml_input_alt.appendChild(MameGenerator.generateComboPortElement(config_alt, ':COL2', pad.index, "KEYBOARD", "X", int(pad.inputs["a"].id) + 1, "16", "16"))            # X
-                xml_input_alt.appendChild(MameGenerator.generateComboPortElement(config_alt, ':COL9', pad.index, "KEYBOARD", "ENTER", int(pad.inputs["pagedown"].id) + 1, "16", "16")) # Enter
-                if dpadMode == 0:
-                    xml_input_alt.appendChild(MameGenerator.generateComboDirPortElement(config_alt, ':COL9', pad.index, "KEYBOARD", "DOWN", "JOYCODE_{}_YAXIS_DOWN_SWITCH OR JOYCODE_{}_HAT1DOWN", "4", "4"))       # Down
-                    xml_input_alt.appendChild(MameGenerator.generateComboDirPortElement(config_alt, ':COL9', pad.index, "KEYBOARD", "LEFT", "JOYCODE_{}_YAXIS_LEFT_SWITCH OR JOYCODE_{}_HAT1LEFT", "2", "2"))       # Left
-                    xml_input_alt.appendChild(MameGenerator.generateComboDirPortElement(config_alt, ':COL9', pad.index, "KEYBOARD", "UP", "JOYCODE_{}_YAXIS_UP_SWITCH OR JOYCODE_{}_HAT1UP", "8", "8"))           # Up
-                    xml_input_alt.appendChild(MameGenerator.generateComboDirPortElement(config_alt, ':COL9', pad.index, "KEYBOARD", "RIGHT", "JOYCODE_{}_YAXIS_RIGHT_SWITCH OR JOYCODE_{}_HAT1RIGHT", "128", "128")) # Right
-                elif dpadMode == 1:
-                    xml_input_alt.appendChild(MameGenerator.generateComboDirPortElement(config_alt, ':COL9', pad.index, "KEYBOARD", "DOWN", "JOYCODE_{}_YAXIS_DOWN_SWITCH OR JOYCODE_{}_HAT1DOWN OR JOYCODE_{}_BUTTON14", "4", "4"))       # Down
-                    xml_input_alt.appendChild(MameGenerator.generateComboDirPortElement(config_alt, ':COL9', pad.index, "KEYBOARD", "LEFT", "JOYCODE_{}_YAXIS_LEFT_SWITCH OR JOYCODE_{}_HAT1LEFT OR JOYCODE_{}_BUTTON15", "2", "2"))       # Left
-                    xml_input_alt.appendChild(MameGenerator.generateComboDirPortElement(config_alt, ':COL9', pad.index, "KEYBOARD", "UP", "JOYCODE_{}_YAXIS_UP_SWITCH OR JOYCODE_{}_HAT1UP OR JOYCODE_{}_BUTTON13", "8", "8"))           # Up
-                    xml_input_alt.appendChild(MameGenerator.generateComboDirPortElement(config_alt, ':COL9', pad.index, "KEYBOARD", "RIGHT", "JOYCODE_{}_YAXIS_RIGHT_SWITCH OR JOYCODE_{}_HAT1RIGHT OR JOYCODE_{}_BUTTON16", "128", "128")) # Right
-                else:
-                    xml_input_alt.appendChild(MameGenerator.generateComboDirPortElement(config_alt, ':COL9', pad.index, "KEYBOARD", "DOWN", "JOYCODE_{}_YAXIS_DOWN_SWITCH OR JOYCODE_{}_HAT1DOWN OR JOYCODE_{}_BUTTON14", "4", "4"))       # Down
-                    xml_input_alt.appendChild(MameGenerator.generateComboDirPortElement(config_alt, ':COL9', pad.index, "KEYBOARD", "LEFT", "JOYCODE_{}_YAXIS_LEFT_SWITCH OR JOYCODE_{}_HAT1LEFT OR JOYCODE_{}_BUTTON11", "2", "2"))       # Left
-                    xml_input_alt.appendChild(MameGenerator.generateComboDirPortElement(config_alt, ':COL9', pad.index, "KEYBOARD", "UP", "JOYCODE_{}_YAXIS_UP_SWITCH OR JOYCODE_{}_HAT1UP OR JOYCODE_{}_BUTTON13", "8", "8"))           # Up
-                    xml_input_alt.appendChild(MameGenerator.generateComboDirPortElement(config_alt, ':COL9', pad.index, "KEYBOARD", "RIGHT", "JOYCODE_{}_YAXIS_RIGHT_SWITCH OR JOYCODE_{}_HAT1RIGHT OR JOYCODE_{}_BUTTON12", "128", "128")) # Right
-            
-            nplayer = nplayer + 1
-            
-        # Write alt config (if used, custom config is turned off or file doesn't exist yet)
-        if sysName in ("cdimono1", "apfm1000", "astrocde", "adam", "arcadia", "gamecom", "tutor", "crvision", "bbcb") and writeConfig:
-            mameXml_alt = codecs.open(configFile_alt, "w", "utf-8")
-            dom_string_alt = os.linesep.join([s for s in config_alt.toprettyxml().splitlines() if s.strip()]) # remove ugly empty lines while minicom adds them...
-            mameXml_alt.write(dom_string_alt)
-
-    @staticmethod
-    def reverseMapping(key):
-        if key == "joystick1down":
-            return "joystick1up"
-        if key == "joystick1right":
-            return "joystick1left"
-        if key == "joystick2down":
-            return "joystick2up"
-        if key == "joystick2right":
-            return "joystick2left"
-        return None
-
-    @staticmethod
-    def generatePortElement(config, nplayer, padindex, mapping, key, input, reversed, dpadMode):
-        # Generic input
-        xml_port = config.createElement("port")
-        xml_port.setAttribute("type", "P{}_{}".format(nplayer, mapping))
-        xml_newseq = config.createElement("newseq")
-        xml_newseq.setAttribute("type", "standard")
-        xml_port.appendChild(xml_newseq)
-        value = config.createTextNode(MameGenerator.input2definition(key, input, padindex + 1, reversed, dpadMode))
-        xml_newseq.appendChild(value)
-        return xml_port
-
-    @staticmethod
-    def generateSpecialPortElement(config, tag, nplayer, padindex, mapping, key, mask, default):
-        # Special button input (ie mouse button to gamepad)
-        xml_port = config.createElement("port")
-        xml_port.setAttribute("tag", tag)
-        xml_port.setAttribute("type", mapping)
-        xml_port.setAttribute("mask", mask)
-        xml_port.setAttribute("defvalue", default)
-        xml_newseq = config.createElement("newseq")
-        xml_newseq.setAttribute("type", "standard")
-        xml_port.appendChild(xml_newseq)
-        value = config.createTextNode("JOYCODE_{}_BUTTON{}".format(padindex + 1, key))
-        xml_newseq.appendChild(value)
-        return xml_port
-
-    @staticmethod
-    def generateKeycodePortElement(config, tag, mapping, key, mask, default):
-        # Map a keyboard key instead of a button (for start/select due to auto pad2key)
-        xml_port = config.createElement("port")
-        xml_port.setAttribute("tag", tag)
-        xml_port.setAttribute("type", mapping)
-        xml_port.setAttribute("mask", mask)
-        xml_port.setAttribute("defvalue", default)
-        xml_newseq = config.createElement("newseq")
-        xml_newseq.setAttribute("type", "standard")
-        xml_port.appendChild(xml_newseq)
-        value = config.createTextNode("KEYCODE_{}".format(key))
-        xml_newseq.appendChild(value)
-        return xml_port
-
-    @staticmethod
-    def generateComboPortElement(config, tag, padindex, mapping, key, button, mask, default):
-        # Maps a keycode + button - for important keyboard keys when available
-        xml_port = config.createElement("port")
-        xml_port.setAttribute("tag", tag)
-        xml_port.setAttribute("type", mapping)
-        xml_port.setAttribute("mask", mask)
-        xml_port.setAttribute("defvalue", default)
-        xml_newseq = config.createElement("newseq")
-        xml_newseq.setAttribute("type", "standard")
-        xml_port.appendChild(xml_newseq)
-        value = config.createTextNode("KEYCODE_{} OR JOYCODE_{}_BUTTON{}".format(key, padindex + 1, button))
-        xml_newseq.appendChild(value)
-        return xml_port
-
-    @staticmethod
-    def generateComboDirPortElement(config, tag, padindex, mapping, key, buttontext, mask, default):
-        # Maps a keyboard key + directional input - for keyboard arrow keys
-        xml_port = config.createElement("port")
-        xml_port.setAttribute("tag", tag)
-        xml_port.setAttribute("type", mapping)
-        xml_port.setAttribute("mask", mask)
-        xml_port.setAttribute("defvalue", default)
-        xml_newseq = config.createElement("newseq")
-        xml_newseq.setAttribute("type", "standard")
-        xml_port.appendChild(xml_newseq)
-        value = config.createTextNode("KEYCODE_{} OR ".format(key) + buttontext.format(padindex + 1, padindex + 1, padindex + 1))
-        xml_newseq.appendChild(value)
-        return xml_port
-
-    @staticmethod
-    def generateDirectionPortElement(config, tag, nplayer, padindex, mapping, key, mask, default):
-        # Special direction mapping for emulated controllers
-        xml_port = config.createElement("port")
-        xml_port.setAttribute("tag", tag)
-        xml_port.setAttribute("type", mapping)
-        xml_port.setAttribute("mask", mask)
-        xml_port.setAttribute("defvalue", default)
-        xml_newseq = config.createElement("newseq")
-        xml_newseq.setAttribute("type", "standard")
-        xml_port.appendChild(xml_newseq)
-        value = config.createTextNode(key.format(padindex + 1, padindex + 1, padindex + 1))
-        xml_newseq.appendChild(value)
-        return xml_port
-
-    @staticmethod
-    def generateIncDecPortElement(config, tag, nplayer, padindex, mapping, inckey, deckey, mask, default, delta):
-        # Mapping analog to digital (mouse, etc)
-        xml_port = config.createElement("port")
-        xml_port.setAttribute("tag", tag)
-        xml_port.setAttribute("type", mapping)
-        xml_port.setAttribute("mask", mask)
-        xml_port.setAttribute("defvalue", default)
-        xml_port.setAttribute("keydelta", delta)
-        xml_newseq_inc = config.createElement("newseq")
-        xml_newseq_inc.setAttribute("type", "increment")
-        xml_port.appendChild(xml_newseq_inc)
-        incvalue = config.createTextNode(inckey.format(padindex + 1, padindex + 1, padindex + 1))
-        xml_newseq_inc.appendChild(incvalue)
-        xml_newseq_dec = config.createElement("newseq")
-        xml_port.appendChild(xml_newseq_dec)
-        xml_newseq_dec.setAttribute("type", "decrement")
-        decvalue = config.createTextNode(deckey.format(padindex + 1, padindex + 1, padindex + 1))
-        xml_newseq_dec.appendChild(decvalue)
-        return xml_port
-
-    @staticmethod
-    def input2definition(key, input, joycode, reversed, dpadMode):
-        if input.type == "button":
-            return "JOYCODE_{}_BUTTON{}".format(joycode, int(input.id)+1)
-        elif input.type == "hat":
-            if input.value == "1":
-                return "JOYCODE_{}_HAT1UP".format(joycode)
-            elif input.value == "2":
-                return "JOYCODE_{}_HAT1RIGHT".format(joycode)
-            elif input.value == "4":
-                return "JOYCODE_{}_HAT1DOWN".format(joycode)
-            elif input.value == "8":
-                return "JOYCODE_{}_HAT1LEFT".format(joycode)
-        elif input.type == "axis":
-            if key == "joystick1up" or key == "up":
-                if dpadMode == 0:
-                    return "JOYCODE_{}_YAXIS_UP_SWITCH OR JOYCODE_{}_HAT1UP".format(joycode, joycode)
-                else:
-                    return "JOYCODE_{}_YAXIS_UP_SWITCH OR JOYCODE_{}_HAT1UP OR JOYCODE_{}_BUTTON13".format(joycode, joycode, joycode)
-            if key == "joystick1down" or key == "down":
-                if dpadMode == 0:
-                    return "JOYCODE_{}_YAXIS_DOWN_SWITCH OR JOYCODE_{}_HAT1DOWN".format(joycode, joycode)
-                else:
-                    return "JOYCODE_{}_YAXIS_DOWN_SWITCH OR JOYCODE_{}_HAT1DOWN OR JOYCODE_{}_BUTTON14".format(joycode, joycode, joycode)
-            if key == "joystick1left" or key == "left":
-                if dpadMode == 0:
-                    return "JOYCODE_{}_YAXIS_LEFT_SWITCH OR JOYCODE_{}_HAT1LEFT".format(joycode, joycode)
-                elif dpadMode == 1:
-                    return "JOYCODE_{}_YAXIS_LEFT_SWITCH OR JOYCODE_{}_HAT1LEFT OR JOYCODE_{}_BUTTON15".format(joycode, joycode, joycode)
-                else:
-                    return "JOYCODE_{}_YAXIS_LEFT_SWITCH OR JOYCODE_{}_HAT1LEFT OR JOYCODE_{}_BUTTON11".format(joycode, joycode, joycode)
-            if key == "joystick1right" or key == "right":
-                if dpadMode == 0:
-                    return "JOYCODE_{}_YAXIS_RIGHT_SWITCH OR JOYCODE_{}_HAT1RIGHT".format(joycode, joycode)
-                elif dpadMode == 1:
-                    return "JOYCODE_{}_YAXIS_RIGHT_SWITCH OR JOYCODE_{}_HAT1RIGHT OR JOYCODE_{}_BUTTON16".format(joycode, joycode, joycode)
-                else:
-                    return "JOYCODE_{}_YAXIS_RIGHT_SWITCH OR JOYCODE_{}_HAT1RIGHT OR JOYCODE_{}_BUTTON12".format(joycode, joycode, joycode)
-            if key == "joystick2up":
-                return "JOYCODE_{}_RYAXIS_NEG_SWITCH OR JOYCODE_{}_BUTTON4".format(joycode, joycode)
-            if key == "joystick2down":
-                return "JOYCODE_{}_RYAXIS_POS_SWITCH OR JOYCODE_{}_BUTTON1".format(joycode, joycode)
-            if key == "joystick2left":
-                return "JOYCODE_{}_RXAXIS_NEG_SWITCH OR JOYCODE_{}_BUTTON3".format(joycode, joycode)
-            if key == "joystick2right":
-                return "JOYCODE_{}_RXAXIS_POS_SWITCH OR JOYCODE_{}_BUTTON2".format(joycode, joycode)
-        eslog.warning("unable to find input2definition for {} / {}".format(input.type, key))
-        return "unknown"
-
-    @staticmethod
-    def writeBezelConfig(bezel, system, rom):
+    def writeBezelConfig(bezelSet, system, rom, messSys):
         romBase = os.path.splitext(os.path.basename(rom))[0] # filename without extension
 
-        tmpZipDir = "/var/run/mame_artwork/" + romBase # ok, no need to zip, a folder is taken too
+        if messSys == "":
+            tmpZipDir = "/var/run/mame_artwork/" + romBase # ok, no need to zip, a folder is taken too
+        else:
+            tmpZipDir = "/var/run/mame_artwork/" + messSys # ok, no need to zip, a folder is taken too
         # clean, in case no bezel is set, and in case we want to recreate it
         if os.path.exists(tmpZipDir):
             shutil.rmtree(tmpZipDir)
 
-        if bezel is None:
+        if bezelSet is None:
             return
 
         # let's generate the zip file
         os.makedirs(tmpZipDir)
 
         # bezels infos
-        bz_infos = bezelsUtil.getBezelInfos(rom, bezel, system.name)
+        bz_infos = bezelsUtil.getBezelInfos(rom, bezelSet, system.name)
         if bz_infos is None:
             return
 
         # copy the png inside
-        os.symlink(bz_infos["png"], tmpZipDir + "/default.png")
-
-        img_width, img_height = bezelsUtil.fast_image_size(bz_infos["png"])
-        _, _, rotate = MameGenerator.getMameMachineSize(romBase, tmpZipDir)
-
-        # assumes that all bezels are setup for 4:3H or 3:4V aspects
-        if rotate == 270 or rotate == 90:
-            bz_width = int(img_height * (3 / 4))
+        if os.path.exists(bz_infos["mamezip"]):
+            if messSys == "":
+                artFile = "/var/run/mame_artwork/" + romBase + ".zip"
+            else:
+                artFile = "/var/run/mame_artwork/" + messSys + ".zip"
+            if os.path.exists(artFile):
+                if os.islink(artFile):
+                    os.unlink(artFile)
+                else:
+                    os.remove(artFile)
+            os.symlink(bz_infos["mamezip"], artFile)
+            return
+        elif os.path.exists(bz_infos["layout"]):
+            os.symlink(bz_infos["layout"], tmpZipDir + "/default.lay")
+            pngFile = os.path.split(bz_infos["png"])[1]
+            os.symlink(bz_infos["png"], tmpZipDir + "/" + pngFile)
         else:
-            bz_width = int(img_height * (4 / 3))
-        bz_height = img_height
-        bz_x = int((img_width - bz_width) / 2)
-        bz_y = 0
+            pngFile = "default.png"
+            os.symlink(bz_infos["png"], tmpZipDir + "/default.png")
+            if os.path.exists(bz_infos["info"]):
+                bzInfoFile = open(bz_infos["info"], "r")
+                bzInfoText = bzInfoFile.readlines()
+                bz_alpha = 1.0 # Just in case it's not set in the info file
+                for infoLine in bzInfoText:
+                    if len(infoLine) > 7:
+                        infoLineClean = (infoLine.replace('"', '')).rstrip(",\n").lstrip()
+                        infoLineData = infoLineClean.split(":")
+                        if infoLineData[0].lower() == "width":
+                            img_width = int(infoLineData[1])
+                        elif infoLineData[0].lower() == "height":
+                            img_height = int(infoLineData[1])
+                        elif infoLineData[0].lower() == "top":
+                            bz_y = int(infoLineData[1])
+                        elif infoLineData[0].lower() == "left":
+                            bz_x = int(infoLineData[1])
+                        elif infoLineData[0].lower() == "bottom":
+                            bz_bottom = int(infoLineData[1])
+                        elif infoLineData[0].lower() == "right":
+                            bz_right = int(infoLineData[1])
+                        elif infoLineData[0].lower() == "opacity":
+                            bz_alpha = float(infoLineData[1])
+                bzInfoFile.close()
+                bz_width = img_width - bz_x - bz_right
+                bz_height = img_height - bz_y - bz_bottom
+            else:
+                img_width, img_height = bezelsUtil.fast_image_size(bz_infos["png"])
+                _, _, rotate = MameGenerator.getMameMachineSize(romBase, tmpZipDir)
+
+                # assumes that all bezels are setup for 4:3H or 3:4V aspects
+                if rotate == 270 or rotate == 90:
+                    bz_width = int(img_height * (3 / 4))
+                else:
+                    bz_width = int(img_height * (4 / 3))
+                bz_height = img_height
+                bz_x = int((img_width - bz_width) / 2)
+                bz_y = 0
+                bz_alpha = 1.0
+
+            f = open(tmpZipDir + "/default.lay", 'w')
+            f.write("<mamelayout version=\"2\">\n")
+            f.write("<element name=\"bezel\"><image file=\"default.png\" /></element>\n")
+            f.write("<view name=\"bezel\">\n")
+            f.write("<screen index=\"0\"><bounds x=\"" + str(bz_x) + "\" y=\"" + str(bz_y) + "\" width=\"" + str(bz_width) + "\" height=\"" + str(bz_height) + "\" /></screen>\n")
+            f.write("<element ref=\"bezel\"><bounds x=\"0\" y=\"0\" width=\"" + str(img_width) + "\" height=\"" + str(img_height) + "\" alpha=\"" + str(bz_alpha) + "\" /></element>\n")
+            f.write("</view>\n")
+            f.write("</mamelayout>\n")
+            f.close()
 
         if system.isOptSet('bezel.tattoo') and system.config['bezel.tattoo'] != "0":
             if system.config['bezel.tattoo'] == 'system':
@@ -792,7 +496,7 @@ class MameGenerator(Generator):
                 except:
                     eslog.error("Error opening custom file: {}".format('tattoo_file'))
             output_png_file = "/tmp/bezel_tattooed.png"
-            back = Image.open(tmpZipDir + "/default.png")
+            back = Image.open(tmpZipDir + "/" + pngFile)
             tattoo = tattoo.convert("RGBA")
             back = back.convert("RGBA")
             tw,th = bezelsUtil.fast_image_size(tattoo_file)
@@ -819,20 +523,10 @@ class MameGenerator(Generator):
             imgnew.save(output_png_file, mode="RGBA", format="PNG")
 
             try:
-                os.remove(tmpZipDir + "/default.png")
+                os.remove(tmpZipDir + "/" + pngFile)
             except:
                 pass
-            os.symlink(output_png_file, tmpZipDir + "/default.png")
-
-        f = open(tmpZipDir + "/default.lay", 'w')
-        f.write("<mamelayout version=\"2\">")
-        f.write("<element name=\"bezel\"><image file=\"default.png\" /></element>")
-        f.write("<view name=\"bezel\">")
-        f.write("<screen index=\"0\"><bounds x=\"" + str(bz_x) + "\" y=\"" + str(bz_y) + "\" width=\"" + str(bz_width) + "\" height=\"" + str(bz_height) + "\" /></screen>")
-        f.write("<bezel element=\"bezel\"><bounds x=\"0\" y=\"0\" width=\"" + str(img_width) + "\" height=\"" + str(img_height) + "\" /></bezel>")
-        f.write("</view>")
-        f.write("</mamelayout>")
-        f.close()
+            os.symlink(output_png_file, tmpZipDir + "/" + pngFile)
 
     @staticmethod
     def getMameMachineSize(machine, tmpdir):
@@ -858,3 +552,62 @@ class MameGenerator(Generator):
             return int(iwidth), int(iheight), int(irotate)
 
         raise Exception("display element not found")
+
+def getMameControlScheme(system, romBasename):
+    # Game list files
+    mameCapcom = '/usr/share/batocera/configgen/data/mame/mameCapcom.txt'
+    mameKInstinct = '/usr/share/batocera/configgen/data/mame/mameKInstinct.txt'
+    mameMKombat = '/usr/share/batocera/configgen/data/mame/mameMKombat.txt'
+    mameNeogeo = '/usr/share/batocera/configgen/data/mame/mameNeogeo.txt'
+    mameTwinstick = '/usr/share/batocera/configgen/data/mame/mameTwinstick.txt'
+    mameRotatedstick = '/usr/share/batocera/configgen/data/mame/mameRotatedstick.txt'
+
+    # Controls for games with 5-6 buttons or other unusual controls
+    if system.isOptSet("altlayout"):
+        controllerType = system.config["altlayout"] # Option was manually selected
+    else:
+        controllerType = "auto"
+
+    if controllerType in [ "default", "neomini", "neocd", "twinstick", "qbert" ]:
+        return controllerType
+    else:
+        capcomList = set(open(mameCapcom).read().split())
+        mkList = set(open(mameMKombat).read().split())
+        kiList = set(open(mameKInstinct).read().split())
+        neogeoList = set(open(mameNeogeo).read().split())
+        twinstickList = set(open(mameTwinstick).read().split())
+        qbertList = set(open(mameRotatedstick).read().split())
+            
+        romName = os.path.splitext(romBasename)[0]
+        if romName in capcomList:
+            if controllerType in [ "auto", "snes" ]:
+                return "sfsnes"
+            elif controllerType == "megadrive":
+                return "megadrive"
+            elif controllerType == "fightstick":
+                return "sfstick"
+        elif romName in mkList:
+            if controllerType in [ "auto", "snes" ]:
+                return "mksnes"
+            elif controllerType == "megadrive":
+                return "mkmegadrive"
+            elif controllerType == "fightstick":
+                return "mkstick"
+        elif romName in kiList:
+            if controllerType in [ "auto", "snes" ]:
+                return "kisnes"
+            elif controllerType == "megadrive":
+                return "megadrive"
+            elif controllerType == "fightstick":
+                return "sfstick"
+        elif romName in  neogeoList:
+            return "neomini"
+        elif romName in  twinstickList:
+            return "twinstick"
+        elif romName in  qbertList:
+            return "qbert"
+        else:
+            if controllerType == "fightstick":
+                return "fightstick"
+
+    return "default"

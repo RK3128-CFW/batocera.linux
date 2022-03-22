@@ -30,7 +30,7 @@ else ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_X86)$(BR2_PACKAGE_BATOCERA_TARGET_X86_6
 	BATOCERA_SHADERS_SYSTEM=x86
 else ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_RK3288),y)
 	BATOCERA_SHADERS_SYSTEM=low-gpu
-else ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_RK3399),y)
+else ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_RK3399)$(BR2_PACKAGE_BATOCERA_TARGET_RG552),y)
 	BATOCERA_SHADERS_SYSTEM=rk3399
 else ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_S922X),y)
 	BATOCERA_SHADERS_SYSTEM=odroidn2
@@ -44,6 +44,12 @@ endif
 
 BATOCERA_SHADERS_DIRIN=$(BR2_EXTERNAL_BATOCERA_PATH)/package/batocera/emulators/retroarch/shaders/batocera-shaders/configs
 
+ifeq ($(BATOCERA_SHADERS_SYSTEM),x86)
+	BATOCERA_SHADERS_SETS=sharp-bilinear-simple retro scanlines enhanced curvature zfast flatten-glow mega-bezel mega-bezel-lite mega-bezel-ultralite
+else
+	BATOCERA_SHADERS_SETS=sharp-bilinear-simple retro scanlines enhanced curvature zfast flatten-glow
+endif
+
 define BATOCERA_SHADERS_INSTALL_TARGET_CMDS
 	mkdir -p $(TARGET_DIR)/usr/share/batocera/shaders/configs
 
@@ -54,14 +60,13 @@ define BATOCERA_SHADERS_INSTALL_TARGET_CMDS
 	fi
 
 	# sets
-	for set in retro scanlines enhanced curvature zfast flatten-glow; do \
+	for set in $(BATOCERA_SHADERS_SETS); do \
 		mkdir -p $(TARGET_DIR)/usr/share/batocera/shaders/configs/$$set; \
 		cp $(BATOCERA_SHADERS_DIRIN)/$$set/rendering-defaults.yml     $(TARGET_DIR)/usr/share/batocera/shaders/configs/$$set/; \
 		if test -e $(BATOCERA_SHADERS_DIRIN)/$$set/rendering-defaults-$(BATOCERA_SHADERS_SYSTEM).yml; then \
 			cp $(BATOCERA_SHADERS_DIRIN)/$$set/rendering-defaults-$(BATOCERA_SHADERS_SYSTEM).yml $(TARGET_DIR)/usr/share/batocera/shaders/configs/$$set/rendering-defaults-arch.yml; \
 		fi \
 	done
-
 endef
 
 $(eval $(generic-package))

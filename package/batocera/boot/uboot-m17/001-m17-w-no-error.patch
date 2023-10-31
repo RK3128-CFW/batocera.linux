@@ -1,0 +1,11 @@
+--- a/Makefile	2023-10-30 16:45:18.326866119 +0000
++++ b/Makefile	2023-10-30 16:45:06.242891951 +0000
+@@ -360,7 +360,7 @@
+ KBUILD_CFLAGS   := -Wall -Wstrict-prototypes \
+ 		   -Wno-format-security \
+ 		   -fno-builtin -ffreestanding
+-KBUILD_CFLAGS	+= -fshort-wchar -Werror
++KBUILD_CFLAGS	+= -fshort-wchar -Werror -Wno-error=address -Wno-error=maybe-uninitialized 
+ KBUILD_AFLAGS   := -D__ASSEMBLY__
+ 
+ # Read UBOOTRELEASE from include/config/uboot.release (if it exists)

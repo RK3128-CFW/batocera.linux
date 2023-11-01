@@ -1,0 +1,5 @@
+config BR2_PACKAGE_M17_GAMEPAD
+	bool "M17 Gamepad"
+       
+	help
+          M17 Gamepad controller (converts keys to gamepad)

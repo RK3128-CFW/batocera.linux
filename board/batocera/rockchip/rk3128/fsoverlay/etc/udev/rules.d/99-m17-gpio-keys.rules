@@ -1,2 +1,0 @@
-# m17 gpio-keys are not joysticks
-SUBSYSTEM=="input", ATTRS{name}=="0gpio-keys", MODE="0666", ENV{ID_INPUT_JOYSTICK}="0"

@@ -1,0 +1,2 @@
+# Create M1 gamepad out of 0gpio-keys
+KERNEL=="event*", SUBSYSTEM=="input", ATTRS{name}=="0gpio-keys", MODE="0666", ENV{ID_INPUT_JOYSTICK}="0", RUN+="/usr/bin/m17_gamepad"

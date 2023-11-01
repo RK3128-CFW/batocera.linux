@@ -1,0 +1,37 @@
+#!/bin/sh
+
+BOARD=$(cat /boot/boot/batocera.board)
+
+case "$1" in
+  start)
+	if test "${BOARD}" = "m17"
+	then
+
+		echo 0 > /sys/class/pwm/pwmchip0/export
+		echo 10000000 > /sys/class/pwm/pwmchip0/pwm0/period
+		if [ -f /userdata/system/lcd_backlight ]
+		then
+			VALUE=$(cat /userdata/system/lcd_backlight)
+			echo $VALUE > /sys/class/pwm/pwmchip0/pwm0/duty_cycle
+		else
+			touch /userdata/system/lcd_backlight
+			echo 000000 > /userdata/system/lcd_backlight
+			echo 000000 > /sys/class/pwm/pwmchip0/pwm0/duty_cycle
+		fi
+		echo 1 > /sys/class/pwm/pwmchip0/pwm0/enable
+	fi
+	;;
+  stop)
+	if test "${BOARD}" = "m17"
+	then
+		echo 0 > /sys/class/pwm/pwmchip0/pwm0/enable
+		echo 0 > /sys/class/pwm/pwmchip0/unexport
+	fi
+        ;;
+  *)
+        echo "Usage: $0 {start|stop}"
+        exit 1
+        ;;
+esac
+exit 0
+
